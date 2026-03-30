@@ -272,6 +272,62 @@ body.page-loaded .page-loader {
     font-weight: 700;
 }
 
+.business-card-pane .thumbnail {
+    display: block;
+}
+
+.logo-pane .thumbnail {
+    display: block;
+}
+
+.mobile-app-pane .img-container {
+    border: 3px solid var(--border-color, #d9d9d9);
+    position: relative;
+    display: inline-block;
+}
+
+.mobile-app-pane .mobile-app-trigger {
+    display: block;
+}
+
+.business-card-pane .row {
+    justify-content: center;
+}
+
+.logo-pane .row {
+    justify-content: center;
+}
+
+.mobile-app-pane .row {
+    justify-content: center;
+}
+
+.business-card-pane .thumb {
+    margin-bottom: 24px;
+}
+
+.logo-pane .thumb {
+    margin-bottom: 24px;
+}
+
+.business-card-pane .img-thumbnail {
+    width: 100%;
+    height: auto;
+    margin-bottom: 8px;
+}
+
+.logo-pane .img-thumbnail {
+    width: 100%;
+    height: auto;
+    margin-bottom: 8px;
+}
+
+.mobile-app-pane img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
 .dropdown-column {
     display: flex;
     flex-direction: column;
@@ -350,6 +406,5 @@ body.page-loaded .page-loader {
         overflow-y: auto;
         font-size: 15px;
     }
-
 
 }

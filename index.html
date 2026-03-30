@@ -162,6 +162,9 @@
 
         const WEB_DESIGN_NAME = "Web Design";
         const DELIVERED_PRODUCTS_NAME = "Delivered Products";
+        const BUSINESS_CARD_NAMES = new Set(["Business Card", "Business Cards"]);
+        const LOGO_CATEGORY_NAMES = new Set(["Logo", "Logos", "Logo Design", "Logo Designs"]);
+        const MOBILE_APP_CATEGORY_NAMES = new Set(["Mobile App", "Mobile Apps", "App Design", "App Designs"]);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -251,6 +254,18 @@
             return `tab-${categoryId}-pane`;
         }
 
+        function isBusinessCardCategory(categoryName = "") {
+            return BUSINESS_CARD_NAMES.has(String(categoryName || "").trim());
+        }
+
+        function isLogoCategory(categoryName = "") {
+            return LOGO_CATEGORY_NAMES.has(String(categoryName || "").trim());
+        }
+
+        function isMobileAppCategory(categoryName = "") {
+            return MOBILE_APP_CATEGORY_NAMES.has(String(categoryName || "").trim());
+        }
+
         function createWebCard(project) {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
@@ -289,6 +304,92 @@
                         <div class="card-body">
                             ${titleContent}
                         </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createBusinessCard(project, index) {
+            const imageUrl = sanitizeUrl(project.imageUrl);
+            const rawTitle = String(project.title || project.name || "").trim();
+            const title = escapeHtml(rawTitle || "Business Card");
+            const description = escapeHtml(getProjectDescription(project));
+
+            return `
+                <div class="col-lg-4 col-md-4 col-xs-6 thumb">
+                    <a
+                        class="thumbnail project-modal-trigger"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalShow"
+                        data-image-id="${escapeHtml(project.id || String(index + 1))}"
+                        data-toggle="modal"
+                        data-title="${title}"
+                        data-project-title="${title}"
+                        data-project-image="${escapeHtml(imageUrl)}"
+                        data-project-description="${description}"
+                        data-project-link=""
+                        aria-label="${title}"
+                    >
+                        <img class="img-thumbnail" src="${imageUrl}" alt="${title}">
+                    </a>
+                </div>
+            `;
+        }
+
+        function createLogoCard(project, index) {
+            const imageUrl = sanitizeUrl(project.imageUrl);
+            const rawTitle = String(project.title || project.name || "").trim();
+            const title = escapeHtml(rawTitle || "Logo");
+            const description = escapeHtml(getProjectDescription(project));
+
+            return `
+                <div class="col-lg-3 col-md-4 col-xs-6 thumb">
+                    <a
+                        class="thumbnail project-modal-trigger"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalShow"
+                        data-image-id="${escapeHtml(project.id || String(index + 1))}"
+                        data-toggle="modal"
+                        data-title="${title}"
+                        data-project-title="${title}"
+                        data-project-image="${escapeHtml(imageUrl)}"
+                        data-project-description="${description}"
+                        data-project-link=""
+                        aria-label="${title}"
+                    >
+                        <img class="img-thumbnail" src="${imageUrl}" alt="${title}">
+                    </a>
+                </div>
+            `;
+        }
+
+        function createMobileAppCard(project, index) {
+            const imageUrl = sanitizeUrl(project.imageUrl);
+            const rawTitle = String(project.title || project.name || "").trim();
+            const title = escapeHtml(rawTitle || "Mobile App");
+            const description = escapeHtml(getProjectDescription(project));
+
+            return `
+                <div class="col-md-4 mb-4">
+                    <div class="img-container">
+                        <a
+                            class="project-modal-trigger mobile-app-trigger"
+                            href="#"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalShow"
+                            data-image-id="${escapeHtml(project.id || String(index + 1))}"
+                            data-toggle="modal"
+                            data-title="${title}"
+                            data-project-title="${title}"
+                            data-project-image="${escapeHtml(imageUrl)}"
+                            data-project-description="${description}"
+                            data-project-link=""
+                            aria-label="${title}"
+                        >
+                            <img src="${imageUrl}" class="w-100 shadow-1-strong" alt="${title}">
+                        </a>
                     </div>
                 </div>
             `;
@@ -531,6 +632,75 @@
             `;
         }
 
+        function renderBusinessCardProjects(tabPaneId, projects) {
+            const tabPane = document.getElementById(tabPaneId);
+
+            if (!tabPane) {
+                return;
+            }
+
+            if (!projects.length) {
+                renderNoDataState(tabPaneId);
+                return;
+            }
+
+            const cards = sortByCreatedAt(projects).map(createBusinessCard).join("");
+
+            tabPane.innerHTML = `
+                <div class="business-card-pane">
+                    <div class="container pt-5">
+                        <div class="row">
+                            ${cards}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLogoProjects(tabPaneId, projects) {
+            const tabPane = document.getElementById(tabPaneId);
+
+            if (!tabPane) {
+                return;
+            }
+
+            if (!projects.length) {
+                renderNoDataState(tabPaneId);
+                return;
+            }
+
+            const cards = sortByCreatedAt(projects).map(createLogoCard);
+
+            tabPane.innerHTML = `
+                <div class="logo-pane container pt-5">
+                    ${createRows(cards, 4)}
+                </div>
+            `;
+        }
+
+        function renderMobileAppProjects(tabPaneId, projects) {
+            const tabPane = document.getElementById(tabPaneId);
+
+            if (!tabPane) {
+                return;
+            }
+
+            if (!projects.length) {
+                renderNoDataState(tabPaneId);
+                return;
+            }
+
+            const cards = sortByCreatedAt(projects).map(createMobileAppCard).join("");
+
+            tabPane.innerHTML = `
+                <div class="mobile-app-pane container pt-5 text-center">
+                    <div class="row">
+                        ${cards}
+                    </div>
+                </div>
+            `;
+        }
+
         function renderDeliveredProducts(gridId, projects) {
             const grid = document.getElementById(gridId);
 
@@ -624,7 +794,12 @@
                 const categoriesWithDropdown = new Set(
                     orderedMainCategories
                         .filter((category) => {
-                            if (category.name === DELIVERED_PRODUCTS_NAME) {
+                            if (
+                                category.name === DELIVERED_PRODUCTS_NAME ||
+                                isBusinessCardCategory(category.name) ||
+                                isLogoCategory(category.name) ||
+                                isMobileAppCategory(category.name)
+                            ) {
                                 return false;
                             }
 
@@ -677,6 +852,21 @@
                             renderNoDataState(tabPaneId, category.name);
                         }
 
+                        return;
+                    }
+
+                    if (isBusinessCardCategory(category.name)) {
+                        renderBusinessCardProjects(tabPaneId, categoryItems);
+                        return;
+                    }
+
+                    if (isLogoCategory(category.name)) {
+                        renderLogoProjects(tabPaneId, categoryItems);
+                        return;
+                    }
+
+                    if (isMobileAppCategory(category.name)) {
+                        renderMobileAppProjects(tabPaneId, categoryItems);
                         return;
                     }
 
