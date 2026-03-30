@@ -298,7 +298,7 @@
             const rows = [];
 
             for (let i = 0; i < cards.length; i += perRow) {
-                rows.push(`<div class="row">${cards.slice(i, i + perRow).join("")}</div>`);
+                rows.push(`<div class="row justify-content-center">${cards.slice(i, i + perRow).join("")}</div>`);
             }
 
             return rows.join("");
