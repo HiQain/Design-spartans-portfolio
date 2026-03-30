@@ -7,8 +7,6 @@
     <link rel="icon" href="./images/Compressed Logos/designspartans-logo.webp" type="image/icon type">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Design Spartans Portfolio</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="./css/bootstrap.min.css">
     <link rel="stylesheet" href="./css/custom-style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -230,12 +228,15 @@
 
         function createWebCard(project) {
             const imageUrl = sanitizeUrl(project.imageUrl);
-            const title = escapeHtml(project.title || project.name || "Untitled Project");
+            const rawTitle = String(project.title || project.name || "").trim();
+            const shouldShowTitle = rawTitle && rawTitle.toLowerCase() !== "untitled project";
+            const title = shouldShowTitle ? escapeHtml(rawTitle) : "";
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
             const linkUrl = hasLink ? sanitizeUrl(rawLink) : "";
-            const imageMarkup = `<img src="${imageUrl}" class="card-img img-fluid" alt="${title}">`;
-            const titleMarkup = `<h4 class="card-title">${title}</h4>`;
+            const imageAlt = title || "Project image";
+            const imageMarkup = `<img src="${imageUrl}" class="card-img img-fluid" alt="${imageAlt}">`;
+            const titleMarkup = shouldShowTitle ? `<h4 class="card-title">${title}</h4>` : "";
 
             return `
                 <div class="col-md-4 col-lg-4 col-sm-6 web-box">
@@ -641,8 +642,6 @@
         loadPortfolioData();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
-    <script src="./js/dropdown.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/masonry/4.2.2/masonry.pkgd.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="./js/bootstrap.bundle.min.js"></script>
     <script src="./gallery-assets/masonry.pkgd.min.js"></script>
