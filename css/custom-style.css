@@ -57,6 +57,7 @@ body.page-loaded .page-loader {
     font-size: 35px;
     letter-spacing: 2px;
     text-transform: uppercase;
+    text-align: center;
     background-image: url("../images/title-bg.svg");
     background-repeat: no-repeat;
     background-position: center;
