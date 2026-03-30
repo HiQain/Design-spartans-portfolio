@@ -160,12 +160,6 @@
             appId: "1:601370060723:web:c3950c2abe2de4ae3b8dc6"
         };
 
-        const WEB_DESIGN_NAME = "Web Design";
-        const DELIVERED_PRODUCTS_NAME = "Delivered Products";
-        const MERCHANDIZING_NAME = "Merchandizing";
-        const BUSINESS_CARD_NAMES = new Set(["Business Card", "Business Cards"]);
-        const LOGO_CATEGORY_NAMES = new Set(["Logo", "Logos", "Logo Design", "Logo Designs"]);
-        const MOBILE_APP_CATEGORY_NAMES = new Set(["Mobile App", "Mobile Apps", "App Design", "App Designs"]);
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -255,16 +249,24 @@
             return `tab-${categoryId}-pane`;
         }
 
-        function isBusinessCardCategory(categoryName = "") {
-            return BUSINESS_CARD_NAMES.has(String(categoryName || "").trim());
+        function normalizeValue(value = "") {
+            return String(value || "").trim().toLowerCase();
         }
 
-        function isLogoCategory(categoryName = "") {
-            return LOGO_CATEGORY_NAMES.has(String(categoryName || "").trim());
-        }
+        function getCategoryLayout(category = {}, itemSource = "projects") {
+            const configuredLayout = normalizeValue(
+                category.layout ||
+                category.layoutType ||
+                category.displayType ||
+                category.cardType ||
+                category.variant
+            );
 
-        function isMobileAppCategory(categoryName = "") {
-            return MOBILE_APP_CATEGORY_NAMES.has(String(categoryName || "").trim());
+            if (configuredLayout) {
+                return configuredLayout;
+            }
+
+            return itemSource === "media" ? "gallery" : "default";
         }
 
         function createWebCard(project) {
@@ -534,14 +536,6 @@
                 const paneId = getTabPaneId(category.id);
                 const buttonId = getTabButtonId(category.id);
                 const isActive = index === 0;
-
-                if (category.name === DELIVERED_PRODUCTS_NAME) {
-                    return `
-                        <div class="tab-pane ${isActive ? "show active" : ""}" id="${paneId}" role="tabpanel" aria-labelledby="${buttonId}" tabindex="0">
-                            <ul class="grid effect-1" id="grid-${category.id}"></ul>
-                        </div>
-                    `;
-                }
 
                 return `
                     <div class="tab-pane ${isActive ? "show active" : ""}" id="${paneId}" role="tabpanel" aria-labelledby="${buttonId}" tabindex="0"></div>
@@ -864,32 +858,99 @@
             `;
         }
 
-        function renderDeliveredProducts(gridId, projects) {
-            const grid = document.getElementById(gridId);
+        function renderGalleryProjects(tabPaneId, projects) {
+            const tabPane = document.getElementById(tabPaneId);
 
-            if (!grid || !projects.length) {
+            if (!tabPane || !projects.length) {
                 return;
             }
 
             const items = sortByCreatedAt(projects)
-                .map((project) => {
-                    const imageUrl = sanitizeUrl(project.imageUrl);
-                    const title = escapeHtml(project.title || project.name || "Delivered Product");
-
-                    return `
-                        <li class="shown">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalShow" aria-label="${title}">
-                                <img src="${imageUrl}" alt="${title}">
-                            </a>
-                        </li>
-                    `;
-                })
+                .map(createGalleryGridItem)
                 .join("");
 
-            grid.innerHTML = items;
+            tabPane.innerHTML = `
+                <ul class="grid effect-1" id="grid-${tabPaneId}">
+                    ${items}
+                </ul>
+            `;
 
             if (typeof window.gallerySet === "function") {
-                window.gallerySet();
+                const grid = tabPane.querySelector(".grid");
+
+                if (grid) {
+                    window.gallerySet(grid);
+                }
+            }
+        }
+
+        function renderCategoryProjects(tabPaneId, projects, layout = "default") {
+            switch (layout) {
+                case "business-card":
+                case "businesscard":
+                case "business-cards":
+                    renderBusinessCardProjects(tabPaneId, projects);
+                    return;
+                case "logo":
+                case "logos":
+                case "logo-design":
+                case "logo-designs":
+                    renderLogoProjects(tabPaneId, projects);
+                    return;
+                case "mobile-app":
+                case "mobile-apps":
+                case "app-design":
+                case "app-designs":
+                    renderMobileAppProjects(tabPaneId, projects);
+                    return;
+                case "gallery":
+                case "masonry":
+                case "media":
+                    renderGalleryProjects(tabPaneId, projects);
+                    return;
+                default:
+                    renderGenericProjects(tabPaneId, projects);
+            }
+        }
+
+        function renderCategorySubSections(tabPaneId, categoryId, subCategories, items, layout = "default") {
+            switch (layout) {
+                case "gallery":
+                case "masonry":
+                case "media":
+                    renderMerchandizingSubCategorySections(tabPaneId, categoryId, subCategories, items);
+                    return;
+                case "business-card":
+                case "businesscard":
+                case "business-cards":
+                    renderTypedSubCategorySections(tabPaneId, subCategories, items, {
+                        cardRenderer: createBusinessCard,
+                        rowClass: "",
+                        wrapperClass: "business-card-pane"
+                    });
+                    return;
+                case "logo":
+                case "logos":
+                case "logo-design":
+                case "logo-designs":
+                    renderTypedSubCategorySections(tabPaneId, subCategories, items, {
+                        cardRenderer: createLogoCard,
+                        rowClass: "",
+                        wrapperClass: "logo-pane container"
+                    });
+                    return;
+                case "mobile-app":
+                case "mobile-apps":
+                case "app-design":
+                case "app-designs":
+                    renderTypedSubCategorySections(tabPaneId, subCategories, items, {
+                        cardRenderer: createMobileAppCard,
+                        rowClass: "",
+                        wrapperClass: "mobile-app-pane container pt-5 text-center"
+                    });
+                    return;
+                default:
+                    renderSubCategorySections(tabPaneId, subCategories, items);
             }
         }
 
@@ -956,13 +1017,7 @@
 
                 const categoriesWithDropdown = new Set(
                     orderedMainCategories
-                        .filter((category) => {
-                            if (category.name === DELIVERED_PRODUCTS_NAME) {
-                                return false;
-                            }
-
-                            return categories.some((item) => item.parentId === category.id);
-                        })
+                        .filter((category) => categories.some((item) => item.parentId === category.id))
                         .map((category) => category.id)
                 );
 
@@ -987,91 +1042,23 @@
                             item.categoryName === category.name
                         );
                     });
-                    const categoryItems = categoryMedia.length ? categoryMedia : categoryProjects;
-
-                    if (category.name === WEB_DESIGN_NAME) {
-                        if (subCategories.length && categoryItems.length) {
-                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
-                            renderSubCategorySections(tabPaneId, subCategories, categoryItems);
-                        } else {
-                            renderDropdownNoData(`dropdown-${category.id}`);
-                            renderNoDataState(tabPaneId, category.name);
-                        }
-
-                        return;
-                    }
-
-                    if (category.name === DELIVERED_PRODUCTS_NAME) {
-                        const deliveredItems = categoryProjects.length ? categoryProjects : categoryMedia;
-
-                        if (deliveredItems.length) {
-                            renderDeliveredProducts(`grid-${category.id}`, deliveredItems);
-                        } else {
-                            renderNoDataState(tabPaneId, category.name);
-                        }
-
-                        return;
-                    }
-
-                    if (isBusinessCardCategory(category.name)) {
-                        if (subCategories.length && categoryItems.length) {
-                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
-                            renderTypedSubCategorySections(tabPaneId, subCategories, categoryItems, {
-                                cardRenderer: createBusinessCard,
-                                rowClass: "",
-                                wrapperClass: "business-card-pane"
-                            });
-                        } else {
-                            renderBusinessCardProjects(tabPaneId, categoryItems);
-                        }
-                        return;
-                    }
-
-                    if (isLogoCategory(category.name)) {
-                        if (subCategories.length && categoryItems.length) {
-                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
-                            renderTypedSubCategorySections(tabPaneId, subCategories, categoryItems, {
-                                cardRenderer: createLogoCard,
-                                rowClass: "",
-                                wrapperClass: "logo-pane container"
-                            });
-                        } else {
-                            renderLogoProjects(tabPaneId, categoryItems);
-                        }
-                        return;
-                    }
-
-                    if (isMobileAppCategory(category.name)) {
-                        if (subCategories.length && categoryItems.length) {
-                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
-                            renderTypedSubCategorySections(tabPaneId, subCategories, categoryItems, {
-                                cardRenderer: createMobileAppCard,
-                                rowClass: "",
-                                wrapperClass: "mobile-app-pane container pt-5 text-center"
-                            });
-                        } else {
-                            renderMobileAppProjects(tabPaneId, categoryItems);
-                        }
-                        return;
-                    }
+                    const itemSource = categoryMedia.length ? "media" : "projects";
+                    const categoryItems = itemSource === "media" ? categoryMedia : categoryProjects;
+                    const categoryLayout = getCategoryLayout(category, itemSource);
 
                     if (subCategories.length) {
+                        renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
+
                         if (categoryItems.length) {
-                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
-                            if (category.name === MERCHANDIZING_NAME) {
-                                renderMerchandizingSubCategorySections(tabPaneId, category.id, subCategories, categoryItems);
-                            } else {
-                                renderSubCategorySections(tabPaneId, subCategories, categoryItems);
-                            }
+                            renderCategorySubSections(tabPaneId, category.id, subCategories, categoryItems, categoryLayout);
                         } else {
-                            renderDropdownNoData(`dropdown-${category.id}`);
                             renderNoDataState(tabPaneId, category.name);
                         }
 
                         return;
                     }
 
-                    renderGenericProjects(tabPaneId, categoryItems);
+                    renderCategoryProjects(tabPaneId, categoryItems, categoryLayout);
                 });
             } catch (error) {
                 console.error("Failed to load portfolio data from Firestore.", error);
