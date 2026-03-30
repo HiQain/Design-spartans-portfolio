@@ -114,15 +114,23 @@
     </section>
 
     <!-- Modal ==============================-->
-    <div class="modal" id="modalShow" tabindex="-1" aria-labelledby="modal56" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade" id="modalShow" tabindex="-1" aria-labelledby="projectModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
+                    <h5 class="modal-title" id="projectModalTitle">Project Preview</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <img src="./images/Delivered Products/The%20Handyman%20Sticker%20_2-02_28_11zon.webp"
-                        class="img-fluid" alt="Delivered Product Preview">
+                        class="img-fluid project-modal__image" id="projectModalImage" alt="Project Preview">
+                    <div class="project-modal__content">
+                        <p class="project-modal__description" id="projectModalDescription">
+                            Project details will appear here.
+                        </p>
+                        <a href="#" class="btn btn-danger project-modal__button d-none" id="projectModalButton"
+                            target="_blank" rel="noopener noreferrer">Launch Website</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -198,6 +206,19 @@
             return trimmedValue.startsWith("./") || trimmedValue.startsWith("/") ? trimmedValue : `https://${trimmedValue}`;
         }
 
+        function getProjectDescription(project) {
+            const candidates = [
+                project.description,
+                project.content,
+                project.summary,
+                project.details,
+                project.shortDescription
+            ];
+
+            const description = candidates.find((value) => String(value || "").trim());
+            return description || "Click the button below to visit this live project.";
+        }
+
         function normalizeTimestamp(value) {
             if (!value) {
                 return 0;
@@ -234,20 +255,35 @@
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
             const linkUrl = hasLink ? sanitizeUrl(rawLink) : "";
+            const description = escapeHtml(getProjectDescription(project));
             const imageAlt = title || "Project image";
             const imageMarkup = `<img src="${imageUrl}" class="card-img img-fluid" alt="${imageAlt}">`;
+            const modalTriggerAttributes = `
+                href="#"
+                class="project-modal-trigger"
+                data-bs-toggle="modal"
+                data-bs-target="#modalShow"
+                data-project-title="${title || "Project Preview"}"
+                data-project-image="${escapeHtml(imageUrl)}"
+                data-project-description="${description}"
+                data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+            `;
             const titleMarkup = shouldShowTitle ? `<h4 class="card-title">${title}</h4>` : "";
+            const imageContent = hasLink
+                ? `<a ${modalTriggerAttributes} aria-label="${title || "Project Preview"}">${imageMarkup}</a>`
+                : imageMarkup;
+            const titleContent = shouldShowTitle
+                ? hasLink
+                    ? `<a ${modalTriggerAttributes} style="text-decoration: none;" aria-label="${title}">${titleMarkup}</a>`
+                    : titleMarkup
+                : "";
 
             return `
                 <div class="col-md-4 col-lg-4 col-sm-6 web-box">
                     <div class="box">
-                        ${hasLink
-                    ? `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">${imageMarkup}</a>`
-                    : imageMarkup}
+                        ${imageContent}
                         <div class="card-body">
-                            ${hasLink
-                    ? `<a href="${linkUrl}" style="text-decoration: none;" target="_blank" rel="noopener noreferrer">${titleMarkup}</a>`
-                    : titleMarkup}
+                            ${titleContent}
                         </div>
                     </div>
                 </div>
@@ -667,22 +703,33 @@
         }
 
         $(document).ready(function () {
-            $('a').on('click', function () {
+            $(document).on('click', '.project-modal-trigger', function (e) {
+                e.preventDefault();
+
+                const title = $(this).attr('data-project-title') || 'Project Preview';
+                const description = $(this).attr('data-project-description') || 'Project details will appear here.';
+                const image = $(this).attr('data-project-image') || '';
+                const link = $(this).attr('data-project-link') || '';
+
+                $('#projectModalTitle').text(title);
+                $('#projectModalDescription').text(description);
+                $('#projectModalImage').attr('src', image).attr('alt', title);
+
+                const $button = $('#projectModalButton');
+                if (link) {
+                    $button.attr('href', link).removeClass('d-none');
+                } else {
+                    $button.attr('href', '#').addClass('d-none');
+                }
+            });
+
+            $(document).on('click', 'a[data-bs-target="#modalShow"]:not(.project-modal-trigger)', function () {
                 var src = $('img', this).attr('src');
-                var modalattr = $(this).attr('data-bs-target');
-                if (modalattr === '#modalShow') {
+                if (src) {
                     $('#modalShow .modal-body img').attr('src', src);
                 }
-
-            })
-
-            $(document).on('click', '.dynamic-web-tab.active', function (e) {
-
-                e.stopPropagation();
-
-                $('.dropdown-toggle').dropdown('toggle');
-
             });
+
         })
 
 
