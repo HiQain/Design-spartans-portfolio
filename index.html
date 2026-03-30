@@ -324,18 +324,22 @@
             descriptionElement.textContent = primaryContent.content || "No data found.";
         }
 
-        function renderNoDataState(tabPaneId, title = "No data found") {
+        function renderNoDataState(tabPaneId, title = "") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
                 return;
             }
 
+            const titleMarkup = title
+                ? `<h2 class="title-bg" style="background-image: url('images/title-bg.svg');">${escapeHtml(title)}</h2>`
+                : "";
+
             tabPane.innerHTML = `
                 <div class="container text-center py-5">
                     <div class="row justify-content-center">
                         <div class="col-lg-8">
-                            <h2 class="title-bg" style="background-image: url('images/title-bg.svg');">${escapeHtml(title)}</h2>
+                            ${titleMarkup}
                             <p class="p mb-0">No data available for this section right now.</p>
                         </div>
                     </div>
@@ -359,7 +363,7 @@
             `;
         }
 
-        function renderTabs(mainCategories) {
+        function renderTabs(mainCategories, categoriesWithDropdown = new Set()) {
             const tabList = document.getElementById("myTab");
             const tabContent = document.getElementById("myTabContent");
 
@@ -371,9 +375,9 @@
                 const buttonId = getTabButtonId(category.id);
                 const paneId = getTabPaneId(category.id);
                 const isActive = index === 0;
-                const isWebDesign = category.name === WEB_DESIGN_NAME;
+                const hasDropdown = categoriesWithDropdown.has(category.id);
 
-                if (isWebDesign) {
+                if (hasDropdown) {
                     return `
                         <li class="nav-item btn-group" role="presentation">
                             <button type="button" class="nav-link dynamic-web-tab ${isActive ? "active" : ""}" id="${buttonId}" data-category-name="${escapeHtml(category.name)}"
@@ -416,19 +420,19 @@
             }).join("");
         }
 
-        function initializeDynamicPlaceholders(mainCategories) {
-            renderTabs(mainCategories);
+        function initializeDynamicPlaceholders(mainCategories, categoriesWithDropdown = new Set()) {
+            renderTabs(mainCategories, categoriesWithDropdown);
             mainCategories.forEach((category) => {
                 const paneId = getTabPaneId(category.id);
                 renderNoDataState(paneId, category.name);
 
-                if (category.name === WEB_DESIGN_NAME) {
+                if (categoriesWithDropdown.has(category.id)) {
                     renderDropdownNoData(`dropdown-${category.id}`);
                 }
             });
         }
 
-        function renderWebDesignDropdown(dropdownId, tabPaneId, subCategories) {
+        function renderCategoryDropdown(dropdownId, tabPaneId, subCategories) {
             const dropdown = document.getElementById(dropdownId);
 
             if (!dropdown) {
@@ -461,7 +465,7 @@
             dropdown.innerHTML = rows.join("") || dropdown.innerHTML;
         }
 
-        function renderWebDesignProjects(tabPaneId, subCategories, projects) {
+        function renderSubCategorySections(tabPaneId, subCategories, items) {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -470,18 +474,20 @@
 
             const sections = subCategories
                 .map((category) => {
-                    const relatedProjects = sortByCreatedAt(
-                        projects.filter((project) => {
-                            const projectSubCategory = project.subCategoryId || project.categoryId;
-                            return projectSubCategory === category.id;
+                    const relatedItems = sortByCreatedAt(
+                        items.filter((item) => {
+                            const itemSubCategoryId = item.subCategoryId || item.categoryId;
+                            const itemSubCategoryName = item.subCategoryName || item.categoryName;
+
+                            return itemSubCategoryId === category.id || itemSubCategoryName === category.name;
                         })
                     );
 
-                    if (!relatedProjects.length) {
+                    if (!relatedItems.length) {
                         return "";
                     }
 
-                    const cards = relatedProjects.map(createWebCard);
+                    const cards = relatedItems.map(createWebCard);
 
                     return `
                         <h2 class="title-bg" id="${slugify(category.name)}" style="background-image: url('images/title-bg.svg');">
@@ -504,7 +510,7 @@
             `;
         }
 
-        function renderGenericProjects(tabPaneId, projects, title) {
+        function renderGenericProjects(tabPaneId, projects) {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -520,7 +526,6 @@
 
             tabPane.innerHTML = `
                 <div class="container text-center py-4">
-                    <h2 class="title-bg" style="background-image: url('images/title-bg.svg');">${escapeHtml(title)}</h2>
                     ${createRows(cards)}
                 </div>
             `;
@@ -616,10 +621,25 @@
                     return;
                 }
 
-                initializeDynamicPlaceholders(orderedMainCategories);
+                const categoriesWithDropdown = new Set(
+                    orderedMainCategories
+                        .filter((category) => {
+                            if (category.name === DELIVERED_PRODUCTS_NAME) {
+                                return false;
+                            }
+
+                            return categories.some((item) => item.parentId === category.id);
+                        })
+                        .map((category) => category.id)
+                );
+
+                initializeDynamicPlaceholders(orderedMainCategories, categoriesWithDropdown);
 
                 orderedMainCategories.forEach((category) => {
                     const tabPaneId = getTabPaneId(category.id);
+                    const subCategories = sortByCreatedAt(
+                        categories.filter((item) => item.parentId === category.id)
+                    );
                     const categoryProjects = projects.filter((project) => {
                         return (
                             project.mainCategoryId === category.id ||
@@ -634,15 +654,12 @@
                             item.categoryName === category.name
                         );
                     });
+                    const categoryItems = categoryMedia.length ? categoryMedia : categoryProjects;
 
                     if (category.name === WEB_DESIGN_NAME) {
-                        const webSubCategories = sortByCreatedAt(
-                            categories.filter((item) => item.parentId === category.id)
-                        );
-
-                        if (webSubCategories.length && categoryProjects.length) {
-                            renderWebDesignDropdown(`dropdown-${category.id}`, tabPaneId, webSubCategories);
-                            renderWebDesignProjects(tabPaneId, webSubCategories, categoryProjects);
+                        if (subCategories.length && categoryItems.length) {
+                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
+                            renderSubCategorySections(tabPaneId, subCategories, categoryItems);
                         } else {
                             renderDropdownNoData(`dropdown-${category.id}`);
                             renderNoDataState(tabPaneId, category.name);
@@ -663,8 +680,19 @@
                         return;
                     }
 
-                    const categoryItems = categoryMedia.length ? categoryMedia : categoryProjects;
-                    renderGenericProjects(tabPaneId, categoryItems, category.name);
+                    if (subCategories.length) {
+                        if (categoryItems.length) {
+                            renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
+                            renderSubCategorySections(tabPaneId, subCategories, categoryItems);
+                        } else {
+                            renderDropdownNoData(`dropdown-${category.id}`);
+                            renderNoDataState(tabPaneId, category.name);
+                        }
+
+                        return;
+                    }
+
+                    renderGenericProjects(tabPaneId, categoryItems);
                 });
             } catch (error) {
                 console.error("Failed to load portfolio data from Firestore.", error);
