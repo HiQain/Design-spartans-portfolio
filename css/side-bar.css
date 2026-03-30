@@ -1,0 +1,46 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.bi-text-right{
+    color: white;
+    cursor: pointer;
+    font-size: 30px!important;
+}
+
+.offcanvas-end {
+    top: 0;
+    right: 0;
+    width: 265px!important;
+    border-left: 1px solid rgba(0,0,0,.2);
+    transform: translateX(100%);
+}
+
+header{
+    height: 100vh;
+    min-height: 400px;
+    background-size: cover;
+    background-image: url(./pic.jfif);
+}
+
+.my-blog{
+    font-weight: 700!important;
+    font-size: 24px!important;
+    color: white!important;
+}
+
+.nav-link{
+    color: black!important;
+}
+
+/*media Query*/
+@media only screen and (max-width:600px){
+    header{
+        background-position: 86% 33%;
+    }
+    .offcanvas-end{
+        width: 200px!important;
+    }
+}

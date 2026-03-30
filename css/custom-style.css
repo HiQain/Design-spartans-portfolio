@@ -1,0 +1,271 @@
+.tab-pane.img-container {
+    border: 3px solid var(--border-color);
+}
+
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.96);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.page-loader__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.page-loader__spinner {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    border: 6px solid rgba(230, 37, 76, 0.18);
+    border-top-color: #E6254C;
+    animation: loader-spin 0.8s linear infinite;
+}
+
+.page-loader__text {
+    margin: 0;
+    color: #1f1f1f;
+    font-family: "Acme", sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+body.page-loaded .page-loader {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+@keyframes loader-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.tab-pane.img-container {
+    position: relative;
+    display: inline-block;
+}
+
+.h {
+    background: url("./images/title-bg.svg");
+}
+
+.custom-background {
+    background-size: 60%;
+}
+
+.Design-Spartans-logo {
+    width: 26%;
+    margin-bottom: -50px;
+}
+
+.title-bg {
+    font-family: "Acme", sans-serif;
+    color: #fff !important;
+    font-size: 35px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background-image: url("images/title-bg.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    margin: 45px 0;
+    padding: 15px 0;
+}
+
+.p {
+    font-family: "Roboto Condensed", sans-serif;
+    font-size: 20px;
+    color: black;
+}
+.btn-danger {
+    background: #E6254C;
+    border-style: hidden;
+    /* height: 60px; */
+    /* border-top-left-radius: 3px; */
+}
+.nav-tabs .dropdown-menu {
+    background-color: #E6254C;
+    left: -135px !important;
+    
+}
+.dropdown-item {
+    color: #ffffff;
+}
+.dropdown-item:focus, .dropdown-item:hover{
+    color: #000 !important;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 600;
+    background-color: #ffffff;
+    
+}
+.dropdown-item:focus, .dropdown-item{
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 600;
+  
+    
+}
+.box .card-img {
+    
+    border-radius: 5px !important;
+    border-top: 5px solid rgb(24, 23, 23) !important;
+    border-bottom:5px solid rgb(66, 66, 66) !important;
+    border-left:5px solid rgb(70, 70, 70) !important; 
+    border-right:5px solid rgb(0, 0, 0) !important; 
+}
+.btn-danger{
+    --bs-btn-hover-border-color:#E6254C ;
+    --bs-btn-active-bg: #E6254C;
+}
+.dropdown-toggle-split{
+    left: -5px;
+    margin-bottom: -1px;
+}
+.nav-tabs {
+    border: none;
+    justify-content: center;
+}
+
+.nav-tabs .nav-item {
+    margin: 1vh 0.8vh;
+}
+
+.nav-tabs .nav-item .nav-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: #E6254C;
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: 0.3s;
+    border: 1px solid #E6254C;
+    border-radius: 5px;
+}
+
+.nav-tabs .nav-item .nav-link.active {
+    color: #fff;
+    background-color: #E6254C;
+}
+
+.box {
+    position: relative;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border-radius: 0.25rem;
+    margin: 20px 0;
+    font-size: 30px;
+    width: 100%;
+    text-align: center;
+}
+
+.box .card-body {
+    padding: 20px;
+}
+
+.box .card-img {
+    width: 100%;
+    height: 230px;
+    border-radius: calc(1rem - 1px);
+    border: 20px solid white;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.box .card-title {
+    color: #2CAFE3;
+    text-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.box .app-img {
+    width: 65%;
+    height: 340px;
+    border-radius: calc(1rem - 1px);
+    border: 8px solid white;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5);
+}
+.dropdown-column{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #333333;
+    padding: 16px;
+}
+.dropdown-menu{
+    --bs-dropdown-min-width: 72rem !important;
+}
+
+/* .dropdown-menu-style ul{
+    list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333333;
+}
+.dropdown-menu-style li{
+    float: left;
+}
+.dropdown-menu-style li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+  }
+  
+  .dropdown-menu-style li a:hover {
+    background-color: #111111;
+  } */
+.thumbnail {
+    display: block;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1140px;
+    }
+   
+}
+
+@media (max-width: 991.98px) {
+    .dropdown-menu {
+        --bs-dropdown-min-width: 10rem !important;
+    }
+    .title-bg {
+        font-family: "Acme", sans-serif;
+        color: #fff !important;
+        font-size: 24px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        background-image: url("images/title-bg.svg");
+        background-size: 100%;
+        background-repeat: no-repeat;
+        background-position: center;
+        /* margin: 45px 0; */
+        padding: 20px 50px;
+    }
+}
+@media (max-width: 768px) {
+    .Design-Spartans-logo {
+        width: 300px;
+        height: 300px;
+    }
+   
+
+    
+}
+
+/*# sourceMappingURL=custom-style.css.map */
