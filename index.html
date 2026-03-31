@@ -162,6 +162,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        let suppressNextTabUrlUpdate = false;
 
         window.changeTab = function (tabPaneId) {
             const triggerButton = document.querySelector(`[data-bs-target="#${tabPaneId}"]`);
@@ -247,6 +248,109 @@
 
         function getTabPaneId(categoryId) {
             return `tab-${categoryId}-pane`;
+        }
+
+        function getCategoryTabSlug(category = {}) {
+            return slugify(category.slug || category.name || category.id || "tab");
+        }
+
+        function updateTabUrl(tabSlug, options = {}) {
+            if (!tabSlug) {
+                return;
+            }
+
+            const { replace = false } = options;
+            const url = new URL(window.location.href);
+
+            url.searchParams.set("tab", tabSlug);
+
+            const historyMethod = replace ? "replaceState" : "pushState";
+            window.history[historyMethod]({}, "", `${url.pathname}${url.search}${url.hash}`);
+        }
+
+        function getRequestedTabSlug() {
+            return normalizeValue(new URLSearchParams(window.location.search).get("tab"));
+        }
+
+        function activateTabFromUrl(options = {}) {
+            const requestedTabSlug = getRequestedTabSlug();
+
+            if (!requestedTabSlug || !window.bootstrap?.Tab) {
+                return false;
+            }
+
+            const triggerButton = document.querySelector(`[data-tab-slug="${requestedTabSlug}"]`);
+
+            if (!triggerButton) {
+                return false;
+            }
+
+            const activeButton = document.querySelector('#myTab [data-bs-toggle="tab"].active');
+
+            if (activeButton === triggerButton) {
+                if (options.syncUrl) {
+                    updateTabUrl(requestedTabSlug, { replace: true });
+                }
+
+                return true;
+            }
+
+            suppressNextTabUrlUpdate = true;
+            window.bootstrap.Tab.getOrCreateInstance(triggerButton).show();
+
+            if (options.syncUrl) {
+                updateTabUrl(requestedTabSlug, { replace: true });
+            }
+
+            return true;
+        }
+
+        function initializeTabUrlSync(mainCategories = []) {
+            const tabList = document.getElementById("myTab");
+
+            if (!tabList) {
+                return;
+            }
+
+            const defaultTabSlug = mainCategories.length ? getCategoryTabSlug(mainCategories[0]) : "";
+
+            tabList.addEventListener("shown.bs.tab", (event) => {
+                if (suppressNextTabUrlUpdate) {
+                    suppressNextTabUrlUpdate = false;
+                    return;
+                }
+
+                const tabSlug = event.target?.dataset?.tabSlug;
+
+                if (tabSlug) {
+                    updateTabUrl(tabSlug);
+                }
+            });
+
+            window.addEventListener("popstate", () => {
+                if (activateTabFromUrl()) {
+                    return;
+                }
+
+                if (!defaultTabSlug || !window.bootstrap?.Tab) {
+                    return;
+                }
+
+                const defaultTriggerButton = document.querySelector(`[data-tab-slug="${defaultTabSlug}"]`);
+
+                if (defaultTriggerButton) {
+                    suppressNextTabUrlUpdate = true;
+                    window.bootstrap.Tab.getOrCreateInstance(defaultTriggerButton).show();
+                }
+            });
+
+            if (activateTabFromUrl({ syncUrl: true })) {
+                return;
+            }
+
+            if (defaultTabSlug) {
+                updateTabUrl(defaultTabSlug, { replace: true });
+            }
         }
 
         function normalizeValue(value = "") {
@@ -505,6 +609,7 @@
             tabList.innerHTML = mainCategories.map((category, index) => {
                 const buttonId = getTabButtonId(category.id);
                 const paneId = getTabPaneId(category.id);
+                const tabSlug = getCategoryTabSlug(category);
                 const isActive = index === 0;
                 const hasDropdown = categoriesWithDropdown.has(category.id);
 
@@ -512,7 +617,7 @@
                     return `
                         <li class="nav-item btn-group" role="presentation">
                             <button type="button" class="nav-link dynamic-web-tab ${isActive ? "active" : ""}" id="${buttonId}" data-category-name="${escapeHtml(category.name)}"
-                                data-bs-toggle="tab" data-bs-target="#${paneId}" role="tab" aria-controls="${paneId}" aria-selected="${isActive}">
+                                data-bs-toggle="tab" data-bs-target="#${paneId}" data-tab-slug="${tabSlug}" role="tab" aria-controls="${paneId}" aria-selected="${isActive}">
                                 ${escapeHtml(category.name)}
                             </button>
                             <button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split"
@@ -524,7 +629,7 @@
 
                 return `
                     <li class="nav-item btn-group" role="presentation">
-                        <button class="nav-link ${isActive ? "active" : ""}" id="${buttonId}" data-bs-toggle="tab"
+                        <button class="nav-link ${isActive ? "active" : ""}" id="${buttonId}" data-bs-toggle="tab" data-tab-slug="${tabSlug}"
                             data-bs-target="#${paneId}" type="button" role="tab" aria-controls="${paneId}" aria-selected="${isActive}">
                             ${escapeHtml(category.name)}
                         </button>
@@ -1022,6 +1127,7 @@
                 );
 
                 initializeDynamicPlaceholders(orderedMainCategories, categoriesWithDropdown);
+                initializeTabUrlSync(orderedMainCategories);
 
                 orderedMainCategories.forEach((category) => {
                     const tabPaneId = getTabPaneId(category.id);
