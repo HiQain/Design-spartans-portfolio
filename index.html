@@ -263,6 +263,29 @@
             return [...items].sort((a, b) => normalizeTimestamp(a.createdAt) - normalizeTimestamp(b.createdAt));
         }
 
+        function normalizeSortOrder(value) {
+            const numericValue = Number(value);
+            return Number.isFinite(numericValue) ? numericValue : Number.MAX_SAFE_INTEGER;
+        }
+
+        function sortCategories(items) {
+            return [...items].sort((a, b) => {
+                const sortOrderDifference = normalizeSortOrder(a.sortOrder) - normalizeSortOrder(b.sortOrder);
+
+                if (sortOrderDifference !== 0) {
+                    return sortOrderDifference;
+                }
+
+                const createdAtDifference = normalizeTimestamp(a.createdAt) - normalizeTimestamp(b.createdAt);
+
+                if (createdAtDifference !== 0) {
+                    return createdAtDifference;
+                }
+
+                return String(a.name || "").localeCompare(String(b.name || ""));
+            });
+        }
+
         function getTabButtonId(categoryId) {
             return `tab-${categoryId}-button`;
         }
@@ -1126,7 +1149,7 @@
                 renderTopContent(topContent);
 
                 const mainCategories = categories.filter((category) => !category.parentId);
-                const orderedMainCategories = sortByCreatedAt(mainCategories);
+                const orderedMainCategories = sortCategories(mainCategories);
 
                 if (!orderedMainCategories.length) {
                     document.getElementById("myTab").innerHTML = "";
@@ -1152,7 +1175,7 @@
 
                 orderedMainCategories.forEach((category) => {
                     const tabPaneId = getTabPaneId(category.id);
-                    const subCategories = sortByCreatedAt(
+                    const subCategories = sortCategories(
                         categories.filter((item) => item.parentId === category.id)
                     );
                     const categoryProjects = projects.filter((project) => {
