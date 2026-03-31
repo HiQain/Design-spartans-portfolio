@@ -177,7 +177,7 @@
             }
         }
 
-        window.changeTab = function (tabPaneId, subCategoryName = "") {
+        window.changeTab = function (tabPaneId, subCategoryName = "", anchorId = "") {
             const triggerButton = document.querySelector(`[data-bs-target="#${tabPaneId}"]`);
 
             if (!triggerButton || !window.bootstrap?.Tab) {
@@ -187,6 +187,17 @@
             updateNoDataHeading(tabPaneId, subCategoryName);
 
             window.bootstrap.Tab.getOrCreateInstance(triggerButton).show();
+
+            if (anchorId) {
+                window.requestAnimationFrame(() => {
+                    window.requestAnimationFrame(() => {
+                        document.getElementById(anchorId)?.scrollIntoView({
+                            behavior: "auto",
+                            block: "start"
+                        });
+                    });
+                });
+            }
         };
 
         function escapeHtml(value = "") {
@@ -298,6 +309,10 @@
             return slugify(category.slug || category.name || category.id || "tab");
         }
 
+        function getSubCategoryAnchorId(category = {}) {
+            return slugify(category.id || category.slug || category.name || "category");
+        }
+
         function updateTabUrl(tabSlug, options = {}) {
             if (!tabSlug) {
                 return;
@@ -314,6 +329,45 @@
 
         function getRequestedTabSlug() {
             return normalizeValue(new URLSearchParams(window.location.search).get("tab"));
+        }
+
+        function getRequestedHashId() {
+            return decodeURIComponent(window.location.hash.replace(/^#/, "")).trim();
+        }
+
+        function clearLocationHash() {
+            const url = new URL(window.location.href);
+            url.hash = "";
+            window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+        }
+
+        function scrollToRequestedHash(options = {}) {
+            const requestedHashId = getRequestedHashId();
+
+            if (!requestedHashId) {
+                return false;
+            }
+
+            const targetElement = document.getElementById(requestedHashId);
+
+            if (!targetElement) {
+                return false;
+            }
+
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    targetElement.scrollIntoView({
+                        behavior: "auto",
+                        block: "start"
+                    });
+
+                    if (options.clearHashAfterScroll) {
+                        clearLocationHash();
+                    }
+                });
+            });
+
+            return true;
         }
 
         function activateTabFromUrl(options = {}) {
@@ -720,12 +774,12 @@
             }
 
             const items = subCategories.map((category) => {
-                const anchorId = slugify(category.name);
+                const anchorId = getSubCategoryAnchorId(category);
                 const name = escapeHtml(String(category.name || "").toUpperCase());
 
                 return `
                     <li>
-                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab('${tabPaneId}', '${escapeJsString(category.name)}')">${name}</a>
+                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab('${tabPaneId}', '${escapeJsString(category.name)}', '${escapeJsString(anchorId)}')">${name}</a>
                     </li>
                 `;
             });
@@ -768,9 +822,10 @@
                     }
 
                     const cards = relatedItems.map(createWebCard);
+                    const anchorId = getSubCategoryAnchorId(category);
 
                     return `
-                        <h2 class="title-bg" id="${slugify(category.name)}" style="background-image: url('images/title-bg.svg');">
+                        <h2 class="title-bg" id="${anchorId}" style="background-image: url('images/title-bg.svg');">
                             ${escapeHtml(category.name)}
                         </h2>
                         ${createRows(cards)}
@@ -823,9 +878,10 @@
                     const sectionBody = rowClass
                         ? `<div class="row ${rowClass}">${cards.join("")}</div>`
                         : createRows(cards, perRow);
+                    const anchorId = getSubCategoryAnchorId(category);
 
                     return `
-                        <h2 class="title-bg" id="${slugify(category.name)}" style="background-image: url('images/title-bg.svg');">
+                        <h2 class="title-bg" id="${anchorId}" style="background-image: url('images/title-bg.svg');">
                             ${escapeHtml(category.name)}
                         </h2>
                         ${sectionBody}
@@ -897,9 +953,10 @@
 
                     const gridId = `grid-${categoryId}-${slugify(category.name)}`;
                     const gridItems = relatedItems.map(createGalleryGridItem).join("");
+                    const anchorId = getSubCategoryAnchorId(category);
 
                     return `
-                        <h2 class="title-bg" id="${slugify(category.name)}" style="background-image: url('images/title-bg.svg');">
+                        <h2 class="title-bg" id="${anchorId}" style="background-image: url('images/title-bg.svg');">
                             ${escapeHtml(category.name)}
                         </h2>
                         <ul class="grid effect-1 merch-grid" id="${gridId}">
@@ -1211,6 +1268,8 @@
 
                     renderCategoryProjects(tabPaneId, categoryItems, categoryLayout);
                 });
+
+                scrollToRequestedHash({ clearHashAfterScroll: true });
             } catch (error) {
                 console.error("Failed to load portfolio data from Firestore.", error);
             } finally {
