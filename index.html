@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="./images/Compressed Logos/designspartans-logo.webp" type="image/icon type">
+    <link rel="icon" id="site-favicon" type="image/webp">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Design Spartans Portfolio</title>
     <link rel="stylesheet" href="./css/bootstrap.min.css">
@@ -93,9 +93,9 @@
             <div class="row">
 
                 <div class="img-container">
-                    <a href="https://designspartans.com/" target="_blank"> <img
-                            src="./images/Logos/Design Spartans Logo.png" alt="Design Spartans Logo "
-                            class="Design-Spartans-logo"></a>
+                    <a href="https://designspartans.com/" target="_blank">
+                        <img id="portfolio-logo" alt="Design Spartans Logo" class="Design-Spartans-logo">
+                    </a>
                 </div>
 
                 <div class="col-lg-10 offset-lg-1">
@@ -584,16 +584,24 @@
         }
 
         function renderTopContent(primaryContent) {
+            const logoElement = document.getElementById("portfolio-logo");
+            const faviconElement = document.getElementById("site-favicon");
             const titleElement = document.getElementById("portfolio-title");
             const descriptionElement = document.getElementById("portfolio-description");
 
-            if (!titleElement || !descriptionElement) {
+            if (!logoElement || !titleElement || !descriptionElement) {
                 return;
             }
 
             if (!primaryContent) {
                 descriptionElement.textContent = "No data found.";
                 return;
+            }
+
+            logoElement.src = primaryContent.logoUrl || "";
+
+            if (faviconElement) {
+                faviconElement.href = primaryContent.logoUrl || "";
             }
 
             if (primaryContent.title) {
@@ -1127,14 +1135,7 @@
         }
 
         async function fetchTopContent() {
-            const primaryContent = await fetchDocument("topContent", "primary");
-
-            if (primaryContent) {
-                return primaryContent;
-            }
-
-            const fallbackContent = await fetchCollection("topContent");
-            return fallbackContent[0] || null;
+            return fetchDocument("topContent", "primary");
         }
 
         async function loadPortfolioData() {
