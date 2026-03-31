@@ -164,12 +164,27 @@
         const db = getFirestore(app);
         let suppressNextTabUrlUpdate = false;
 
-        window.changeTab = function (tabPaneId) {
+        function updateNoDataHeading(tabPaneId, title = "") {
+            if (!title) {
+                return;
+            }
+
+            const tabPane = document.getElementById(tabPaneId);
+            const titleElement = tabPane?.querySelector("[data-no-data-title]");
+
+            if (titleElement) {
+                titleElement.textContent = title;
+            }
+        }
+
+        window.changeTab = function (tabPaneId, subCategoryName = "") {
             const triggerButton = document.querySelector(`[data-bs-target="#${tabPaneId}"]`);
 
             if (!triggerButton || !window.bootstrap?.Tab) {
                 return;
             }
+
+            updateNoDataHeading(tabPaneId, subCategoryName);
 
             window.bootstrap.Tab.getOrCreateInstance(triggerButton).show();
         };
@@ -181,6 +196,12 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#39;");
+        }
+
+        function escapeJsString(value = "") {
+            return String(value)
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'");
         }
 
         function slugify(value = "") {
@@ -567,7 +588,7 @@
             }
 
             const titleMarkup = title
-                ? `<h2 class="title-bg" style="background-image: url('images/title-bg.svg');">${escapeHtml(title)}</h2>`
+                ? `<h2 class="title-bg" data-no-data-title style="background-image: url('images/title-bg.svg');">${escapeHtml(title)}</h2>`
                 : "";
 
             tabPane.innerHTML = `
@@ -673,7 +694,7 @@
 
                 return `
                     <li>
-                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab('${tabPaneId}')">${name}</a>
+                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab('${tabPaneId}', '${escapeJsString(category.name)}')">${name}</a>
                     </li>
                 `;
             });
@@ -1158,7 +1179,7 @@
                         if (categoryItems.length) {
                             renderCategorySubSections(tabPaneId, category.id, subCategories, categoryItems, categoryLayout);
                         } else {
-                            renderNoDataState(tabPaneId, category.name);
+                            renderNoDataState(tabPaneId, subCategories[0]?.name || category.name);
                         }
 
                         return;
