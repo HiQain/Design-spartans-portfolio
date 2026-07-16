@@ -61,7 +61,7 @@ body.page-loaded .page-loader {
     background-image: url("../images/title-bg.svg");
     background-repeat: no-repeat;
     background-position: center;
-    margin: 45px 0;
+    margin: 45px 0 15px;
     padding: 15px 0;
 }
 
@@ -166,7 +166,7 @@ body.page-loaded .page-loader {
 }
 
 .box .card-body {
-    padding: 20px;
+    padding: 5px 20px 20px;
 }
 
 .box .card-img {
@@ -184,7 +184,6 @@ body.page-loaded .page-loader {
 
 .box .card-title {
     color: #2CAFE3;
-    text-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
 }
 
 #modalShow .modal-dialog {

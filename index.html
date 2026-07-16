@@ -501,9 +501,10 @@
                     ? `<a ${modalTriggerAttributes} style="text-decoration: none;" aria-label="${title}">${titleMarkup}</a>`
                     : titleMarkup
                 : "";
+            const linkCheckAttr = hasLink ? ` data-link-check="${escapeHtml(linkUrl)}"` : "";
 
             return `
-                <div class="col-md-4 col-lg-4 col-sm-6 web-box">
+                <div class="col-md-4 col-lg-4 col-sm-6 web-box"${linkCheckAttr}>
                     <div class="box">
                         ${imageContent}
                         <div class="card-body">
@@ -825,10 +826,12 @@
                     const anchorId = getSubCategoryAnchorId(category);
 
                     return `
-                        <h2 class="title-bg" id="${anchorId}" style="background-image: url('images/title-bg.svg');">
-                            ${escapeHtml(category.name)}
-                        </h2>
-                        ${createRows(cards)}
+                        <div class="link-check-subsection">
+                            <h2 class="title-bg" id="${anchorId}" style="background-image: url('images/title-bg.svg');">
+                                ${escapeHtml(category.name)}
+                            </h2>
+                            ${createRows(cards)}
+                        </div>
                     `;
                 })
                 .filter(Boolean)
@@ -1180,6 +1183,82 @@
             }
         }
 
+        const LINK_CHECK_TIMEOUT_MS = 6000;
+        const LINK_CHECK_MAX_ATTEMPTS = 3;
+        const LINK_CHECK_RETRY_DELAY_MS = 800;
+
+        function attemptLinkCheck(url) {
+            return new Promise((resolve) => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => {
+                    controller.abort();
+                    resolve(false);
+                }, LINK_CHECK_TIMEOUT_MS);
+
+                fetch(url, { mode: "no-cors", cache: "no-store", signal: controller.signal })
+                    .then(() => {
+                        clearTimeout(timer);
+                        resolve(true);
+                    })
+                    .catch(() => {
+                        clearTimeout(timer);
+                        resolve(false);
+                    });
+            });
+        }
+
+        function wait(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        async function checkLinkReachable(url) {
+            for (let attempt = 1; attempt <= LINK_CHECK_MAX_ATTEMPTS; attempt += 1) {
+                if (await attemptLinkCheck(url)) {
+                    return true;
+                }
+
+                if (attempt < LINK_CHECK_MAX_ATTEMPTS) {
+                    await wait(LINK_CHECK_RETRY_DELAY_MS);
+                }
+            }
+
+            return false;
+        }
+
+        async function verifyProjectLinks() {
+            const cards = Array.from(document.querySelectorAll("[data-link-check]"));
+
+            await Promise.all(cards.map(async (card) => {
+                const url = card.getAttribute("data-link-check");
+                const isReachable = url && await checkLinkReachable(url);
+
+                if (!isReachable) {
+                    card.classList.add("d-none");
+                }
+            }));
+
+            hideEmptyLinkCheckSections();
+        }
+
+        function hideEmptyLinkCheckSections() {
+            document.querySelectorAll(".link-check-subsection").forEach((section) => {
+                if (!section.querySelector(".web-box:not(.d-none)")) {
+                    section.classList.add("d-none");
+                }
+            });
+
+            document.querySelectorAll(".tab-pane").forEach((tabPane) => {
+                const cards = tabPane.querySelectorAll(".web-box");
+
+                if (!cards.length || tabPane.querySelector(".web-box:not(.d-none)")) {
+                    return;
+                }
+
+                const button = document.getElementById(tabPane.id.replace(/-pane$/, "-button"));
+                renderNoDataState(tabPane.id, button ? button.textContent.trim() : "");
+            });
+        }
+
         async function fetchDocument(collectionName, documentId) {
             const documentRef = doc(db, collectionName, documentId);
             const snapshot = await getDoc(documentRef);
@@ -1195,81 +1274,132 @@
             return fetchDocument("topContent", "primary");
         }
 
-        async function loadPortfolioData() {
+        const PORTFOLIO_CACHE_KEY = "designspartans-portfolio-cache-v1";
+        const PORTFOLIO_CACHE_TTL_MS = 15 * 60 * 1000;
+
+        function readPortfolioCache() {
             try {
-                const [categories, projects, media, topContent] = await Promise.all([
-                    fetchCollection("categories"),
-                    fetchCollection("projects"),
-                    fetchCollection("media"),
-                    fetchTopContent()
-                ]);
+                const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY);
 
-                renderTopContent(topContent);
+                if (!raw) {
+                    return null;
+                }
 
-                const mainCategories = categories.filter((category) => !category.parentId);
-                const orderedMainCategories = sortCategories(mainCategories);
+                const parsed = JSON.parse(raw);
 
-                if (!orderedMainCategories.length) {
-                    document.getElementById("myTab").innerHTML = "";
-                    document.getElementById("myTabContent").innerHTML = `
-                        <div class="tab-pane show active">
-                            <div class="container text-center py-5">
-                                <h2 class="title-bg" style="background-image: url('images/title-bg.svg');">No data found</h2>
-                                <p class="p mb-0">No categories available right now.</p>
-                            </div>
+                if (!parsed || typeof parsed.timestamp !== "number") {
+                    return null;
+                }
+
+                if (Date.now() - parsed.timestamp > PORTFOLIO_CACHE_TTL_MS) {
+                    return null;
+                }
+
+                return parsed.data;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function writePortfolioCache(data) {
+            try {
+                localStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+            } catch (error) {
+                // Caching is a non-critical optimization; ignore storage errors (quota, privacy mode, etc).
+            }
+        }
+
+        async function fetchPortfolioData() {
+            const [categories, projects, media, topContent] = await Promise.all([
+                fetchCollection("categories"),
+                fetchCollection("projects"),
+                fetchCollection("media"),
+                fetchTopContent()
+            ]);
+
+            return { categories, projects, media, topContent };
+        }
+
+        function renderPortfolio({ categories, projects, media, topContent }) {
+            renderTopContent(topContent);
+
+            const mainCategories = categories.filter((category) => !category.parentId);
+            const orderedMainCategories = sortCategories(mainCategories);
+
+            if (!orderedMainCategories.length) {
+                document.getElementById("myTab").innerHTML = "";
+                document.getElementById("myTabContent").innerHTML = `
+                    <div class="tab-pane show active">
+                        <div class="container text-center py-5">
+                            <h2 class="title-bg" style="background-image: url('images/title-bg.svg');">No data found</h2>
+                            <p class="p mb-0">No categories available right now.</p>
                         </div>
-                    `;
+                    </div>
+                `;
+                return;
+            }
+
+            const categoriesWithDropdown = new Set(
+                orderedMainCategories
+                    .filter((category) => categories.some((item) => item.parentId === category.id))
+                    .map((category) => category.id)
+            );
+
+            initializeDynamicPlaceholders(orderedMainCategories, categoriesWithDropdown);
+            initializeTabUrlSync(orderedMainCategories);
+
+            orderedMainCategories.forEach((category) => {
+                const tabPaneId = getTabPaneId(category.id);
+                const subCategories = sortCategories(
+                    categories.filter((item) => item.parentId === category.id)
+                );
+                const categoryProjects = projects.filter((project) => {
+                    return (
+                        project.mainCategoryId === category.id ||
+                        project.mainCategoryName === category.name
+                    );
+                });
+                const categoryMedia = media.filter((item) => {
+                    return (
+                        item.mainCategoryId === category.id ||
+                        item.mainCategoryName === category.name ||
+                        item.categoryId === category.id ||
+                        item.categoryName === category.name
+                    );
+                });
+                const itemSource = categoryMedia.length ? "media" : "projects";
+                const categoryItems = itemSource === "media" ? categoryMedia : categoryProjects;
+                const categoryLayout = getCategoryLayout(category, itemSource);
+
+                if (subCategories.length) {
+                    renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
+
+                    if (categoryItems.length) {
+                        renderCategorySubSections(tabPaneId, category.id, subCategories, categoryItems, categoryLayout);
+                    } else {
+                        renderNoDataState(tabPaneId, subCategories[0]?.name || category.name);
+                    }
+
                     return;
                 }
 
-                const categoriesWithDropdown = new Set(
-                    orderedMainCategories
-                        .filter((category) => categories.some((item) => item.parentId === category.id))
-                        .map((category) => category.id)
-                );
+                renderCategoryProjects(tabPaneId, categoryItems, categoryLayout);
+            });
 
-                initializeDynamicPlaceholders(orderedMainCategories, categoriesWithDropdown);
-                initializeTabUrlSync(orderedMainCategories);
+            verifyProjectLinks();
+            scrollToRequestedHash({ clearHashAfterScroll: true });
+        }
 
-                orderedMainCategories.forEach((category) => {
-                    const tabPaneId = getTabPaneId(category.id);
-                    const subCategories = sortCategories(
-                        categories.filter((item) => item.parentId === category.id)
-                    );
-                    const categoryProjects = projects.filter((project) => {
-                        return (
-                            project.mainCategoryId === category.id ||
-                            project.mainCategoryName === category.name
-                        );
-                    });
-                    const categoryMedia = media.filter((item) => {
-                        return (
-                            item.mainCategoryId === category.id ||
-                            item.mainCategoryName === category.name ||
-                            item.categoryId === category.id ||
-                            item.categoryName === category.name
-                        );
-                    });
-                    const itemSource = categoryMedia.length ? "media" : "projects";
-                    const categoryItems = itemSource === "media" ? categoryMedia : categoryProjects;
-                    const categoryLayout = getCategoryLayout(category, itemSource);
+        async function loadPortfolioData() {
+            try {
+                const cachedData = readPortfolioCache();
+                const data = cachedData || await fetchPortfolioData();
 
-                    if (subCategories.length) {
-                        renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
+                if (!cachedData) {
+                    writePortfolioCache(data);
+                }
 
-                        if (categoryItems.length) {
-                            renderCategorySubSections(tabPaneId, category.id, subCategories, categoryItems, categoryLayout);
-                        } else {
-                            renderNoDataState(tabPaneId, subCategories[0]?.name || category.name);
-                        }
-
-                        return;
-                    }
-
-                    renderCategoryProjects(tabPaneId, categoryItems, categoryLayout);
-                });
-
-                scrollToRequestedHash({ clearHashAfterScroll: true });
+                renderPortfolio(data);
             } catch (error) {
                 console.error("Failed to load portfolio data from Firestore.", error);
             } finally {
@@ -1277,11 +1407,6 @@
                 document.body.classList.add('page-loaded');
             }
         }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById("myTab").innerHTML = "";
-            document.getElementById("myTabContent").innerHTML = "";
-        });
 
         loadPortfolioData();
     </script>
