@@ -403,12 +403,35 @@
             return true;
         }
 
+        function changeTab(event, tabPaneId, anchorId) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            const buttonId = tabPaneId.replace(/-pane$/, "-button");
+            const triggerButton = document.getElementById(buttonId);
+
+            if (triggerButton && window.bootstrap?.Tab) {
+                window.bootstrap.Tab.getOrCreateInstance(triggerButton).show();
+            }
+
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(() => {
+                    document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+            });
+        }
+
+        let tabUrlSyncInitialized = false;
+
         function initializeTabUrlSync(mainCategories = []) {
             const tabList = document.getElementById("myTab");
 
-            if (!tabList) {
+            if (!tabList || tabUrlSyncInitialized) {
                 return;
             }
+
+            tabUrlSyncInitialized = true;
 
             const defaultTabSlug = mainCategories.length ? getCategoryTabSlug(mainCategories[0]) : "";
 
@@ -713,11 +736,17 @@
                 return;
             }
 
+            const previousActiveSlug = tabList.querySelector('[data-bs-toggle="tab"].active')?.dataset.tabSlug || "";
+            const previousActiveIndex = previousActiveSlug
+                ? mainCategories.findIndex((category) => getCategoryTabSlug(category) === previousActiveSlug)
+                : -1;
+            const activeIndex = previousActiveIndex === -1 ? 0 : previousActiveIndex;
+
             tabList.innerHTML = mainCategories.map((category, index) => {
                 const buttonId = getTabButtonId(category.id);
                 const paneId = getTabPaneId(category.id);
                 const tabSlug = getCategoryTabSlug(category);
-                const isActive = index === 0;
+                const isActive = index === activeIndex;
                 const hasDropdown = categoriesWithDropdown.has(category.id);
 
                 if (hasDropdown) {
@@ -747,7 +776,7 @@
             tabContent.innerHTML = mainCategories.map((category, index) => {
                 const paneId = getTabPaneId(category.id);
                 const buttonId = getTabButtonId(category.id);
-                const isActive = index === 0;
+                const isActive = index === activeIndex;
 
                 return `
                     <div class="tab-pane ${isActive ? "show active" : ""}" id="${paneId}" role="tabpanel" aria-labelledby="${buttonId}" tabindex="0"></div>
@@ -780,7 +809,7 @@
 
                 return `
                     <li>
-                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab('${tabPaneId}', '${escapeJsString(category.name)}', '${escapeJsString(anchorId)}')">${name}</a>
+                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab(event, '${tabPaneId}', '${escapeJsString(anchorId)}')">${name}</a>
                     </li>
                 `;
             });
@@ -1228,14 +1257,28 @@
         async function verifyProjectLinks() {
             const cards = Array.from(document.querySelectorAll("[data-link-check]"));
 
-            await Promise.all(cards.map(async (card) => {
+            if (!cards.length) {
+                return;
+            }
+
+            const results = await Promise.all(cards.map(async (card) => {
                 const url = card.getAttribute("data-link-check");
                 const isReachable = url && await checkLinkReachable(url);
+                return { card, isReachable };
+            }));
 
+            const allUnreachable = results.every((result) => !result.isReachable);
+
+            if (allUnreachable) {
+                console.warn("Link reachability check skipped hiding cards: every link failed at once, which usually means the check itself was blocked (network, ad-blocker, etc.) rather than every project link being dead.");
+                return;
+            }
+
+            results.forEach(({ card, isReachable }) => {
                 if (!isReachable) {
                     card.classList.add("d-none");
                 }
-            }));
+            });
 
             hideEmptyLinkCheckSections();
         }
@@ -1320,7 +1363,8 @@
             return { categories, projects, media, topContent };
         }
 
-        function renderPortfolio({ categories, projects, media, topContent }) {
+        function renderPortfolio({ categories, projects, media, topContent }, options = {}) {
+            const { checkLinks = true } = options;
             renderTopContent(topContent);
 
             const mainCategories = categories.filter((category) => !category.parentId);
@@ -1386,20 +1430,26 @@
                 renderCategoryProjects(tabPaneId, categoryItems, categoryLayout);
             });
 
-            verifyProjectLinks();
+            if (checkLinks) {
+                verifyProjectLinks();
+            }
+
             scrollToRequestedHash({ clearHashAfterScroll: true });
         }
 
         async function loadPortfolioData() {
+            const cachedData = readPortfolioCache();
+
+            if (cachedData) {
+                renderPortfolio(cachedData, { checkLinks: false });
+                document.documentElement.classList.remove('dynamic-portfolio-pending');
+                document.body.classList.add('page-loaded');
+            }
+
             try {
-                const cachedData = readPortfolioCache();
-                const data = cachedData || await fetchPortfolioData();
-
-                if (!cachedData) {
-                    writePortfolioCache(data);
-                }
-
-                renderPortfolio(data);
+                const freshData = await fetchPortfolioData();
+                writePortfolioCache(freshData);
+                renderPortfolio(freshData);
             } catch (error) {
                 console.error("Failed to load portfolio data from Firestore.", error);
             } finally {
