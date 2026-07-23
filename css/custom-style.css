@@ -274,6 +274,11 @@
 
 #modalShow .modal-dialog {
     max-width: 1280px;
+    transition: max-width 0.15s ease;
+}
+
+#modalShow .modal-dialog.modal-dialog--image-only {
+    max-width: fit-content;
 }
 
 #modalShow .modal-content {
@@ -330,6 +335,17 @@
     flex-direction: column;
     text-align: left;
     max-height: calc(100vh - 140px);
+}
+
+.project-modal__layout--image-only {
+    justify-content: center;
+}
+
+.project-modal__layout--image-only .project-modal__image {
+    width: auto;
+    max-width: 100%;
+    flex: 0 1 auto;
+    margin: 0 auto;
 }
 
 .project-modal__description {

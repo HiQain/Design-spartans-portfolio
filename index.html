@@ -272,7 +272,7 @@
             ];
 
             const description = candidates.find((value) => String(value || "").trim());
-            return description || "Click the button below to visit this live project.";
+            return description || "";
         }
 
         function normalizeTimestamp(value) {
@@ -558,7 +558,7 @@
                 class="project-modal-trigger"
                 data-bs-toggle="modal"
                 data-bs-target="#modalShow"
-                data-project-title="${title || "Project Preview"}"
+                data-project-title="${title}"
                 data-project-image="${escapeHtml(imageUrl)}"
                 data-project-description="${description}"
                 data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
@@ -589,10 +589,9 @@
         function createBusinessCard(project, index) {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
-            const normalizedTitle = rawTitle && rawTitle.toLowerCase() !== "untitled project"
-                ? rawTitle
-                : "Business Card";
-            const title = escapeHtml(normalizedTitle);
+            const hasRealTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== "untitled project");
+            const title = escapeHtml(hasRealTitle ? rawTitle : "Business Card");
+            const modalTitle = hasRealTitle ? escapeHtml(rawTitle) : "";
             const description = escapeHtml(getProjectDescription(project));
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
@@ -606,7 +605,7 @@
                 data-image-id="${escapeHtml(project.id || String(index + 1))}"
                 data-toggle="modal"
                 data-title="${title}"
-                data-project-title="${title}"
+                data-project-title="${modalTitle}"
                 data-project-image="${escapeHtml(imageUrl)}"
                 data-project-description="${description}"
                 data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
@@ -626,10 +625,9 @@
         function createLogoCard(project, index) {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
-            const normalizedTitle = rawTitle && rawTitle.toLowerCase() !== "untitled project"
-                ? rawTitle
-                : "Logo";
-            const title = escapeHtml(normalizedTitle);
+            const hasRealTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== "untitled project");
+            const title = escapeHtml(hasRealTitle ? rawTitle : "Logo");
+            const modalTitle = hasRealTitle ? escapeHtml(rawTitle) : "";
             const description = escapeHtml(getProjectDescription(project));
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
@@ -643,7 +641,7 @@
                 data-image-id="${escapeHtml(project.id || String(index + 1))}"
                 data-toggle="modal"
                 data-title="${title}"
-                data-project-title="${title}"
+                data-project-title="${modalTitle}"
                 data-project-image="${escapeHtml(imageUrl)}"
                 data-project-description="${description}"
                 data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
@@ -663,10 +661,9 @@
         function createMobileAppCard(project, index) {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
-            const normalizedTitle = rawTitle && rawTitle.toLowerCase() !== "untitled project"
-                ? rawTitle
-                : "Mobile App";
-            const title = escapeHtml(normalizedTitle);
+            const hasRealTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== "untitled project");
+            const title = escapeHtml(hasRealTitle ? rawTitle : "Mobile App");
+            const modalTitle = hasRealTitle ? escapeHtml(rawTitle) : "";
             const description = escapeHtml(getProjectDescription(project));
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
@@ -680,7 +677,7 @@
                 data-image-id="${escapeHtml(project.id || String(index + 1))}"
                 data-toggle="modal"
                 data-title="${title}"
-                data-project-title="${title}"
+                data-project-title="${modalTitle}"
                 data-project-image="${escapeHtml(imageUrl)}"
                 data-project-description="${description}"
                 data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
@@ -965,7 +962,9 @@
         function createGalleryGridItem(project, index) {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
-            const title = escapeHtml(rawTitle || `Project ${index + 1}`);
+            const hasRealTitle = Boolean(rawTitle);
+            const title = escapeHtml(hasRealTitle ? rawTitle : `Project ${index + 1}`);
+            const modalTitle = hasRealTitle ? escapeHtml(rawTitle) : "";
             const description = escapeHtml(getProjectDescription(project));
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
@@ -978,7 +977,7 @@
                         class="project-modal-trigger"
                         data-bs-toggle="modal"
                         data-bs-target="#modalShow"
-                        data-project-title="${title}"
+                        data-project-title="${modalTitle}"
                         data-project-image="${escapeHtml(imageUrl)}"
                         data-project-description="${description}"
                         data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
@@ -1633,14 +1632,35 @@
             $(document).on('click', '.project-modal-trigger', function (e) {
                 e.preventDefault();
 
-                const title = $(this).attr('data-project-title') || 'Project Preview';
-                const description = $(this).attr('data-project-description') || 'Project details will appear here.';
+                const title = ($(this).attr('data-project-title') || '').trim();
+                const description = ($(this).attr('data-project-description') || '').trim();
                 const image = $(this).attr('data-project-image') || '';
-                const link = $(this).attr('data-project-link') || '';
+                const link = ($(this).attr('data-project-link') || '').trim();
 
-                $('#projectModalTitle').text(title);
-                $('#projectModalDescription').text(description);
-                $('#projectModalImage').attr('src', image).attr('alt', title);
+                const $title = $('#projectModalTitle');
+                if (title) {
+                    $title.text(title).removeClass('d-none');
+                } else {
+                    $title.text('').addClass('d-none');
+                }
+
+                const finalDescription = description || (link ? 'Click the button below to visit this live project.' : '');
+                const $content = $('#projectModalDescription').closest('.project-modal__content');
+                const $layout = $('#projectModalImage').closest('.project-modal__layout');
+                const $dialog = $('#modalShow .modal-dialog');
+
+                if (finalDescription || link) {
+                    $('#projectModalDescription').text(finalDescription);
+                    $content.removeClass('d-none');
+                    $layout.removeClass('project-modal__layout--image-only');
+                    $dialog.removeClass('modal-dialog--image-only');
+                } else {
+                    $content.addClass('d-none');
+                    $layout.addClass('project-modal__layout--image-only');
+                    $dialog.addClass('modal-dialog--image-only');
+                }
+
+                $('#projectModalImage').attr('src', image).attr('alt', title || 'Project preview');
 
                 const $button = $('#projectModalButton');
                 if (link) {
