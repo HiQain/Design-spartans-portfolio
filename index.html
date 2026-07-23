@@ -542,7 +542,7 @@
             return itemSource === "media" ? "gallery" : "default";
         }
 
-        function createWebCard(project) {
+        function createWebCard(project, itemSource = "projects") {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
             const shouldShowTitle = rawTitle && rawTitle.toLowerCase() !== "untitled project";
@@ -553,16 +553,19 @@
             const description = escapeHtml(getProjectDescription(project));
             const imageAlt = title || "Project image";
             const imageMarkup = `<img src="${imageUrl}" class="card-img img-fluid" alt="${imageAlt}">`;
-            const modalTriggerAttributes = `
-                href="#"
-                class="project-modal-trigger"
-                data-bs-toggle="modal"
-                data-bs-target="#modalShow"
-                data-project-title="${title}"
-                data-project-image="${escapeHtml(imageUrl)}"
-                data-project-description="${description}"
-                data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
-            `;
+            const isDirectLink = hasLink && itemSource === "projects";
+            const modalTriggerAttributes = isDirectLink
+                ? `href="${escapeHtml(linkUrl)}" class="direct-project-link" target="_blank" rel="noopener noreferrer"`
+                : `
+                    href="#"
+                    class="project-modal-trigger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalShow"
+                    data-project-title="${title}"
+                    data-project-image="${escapeHtml(imageUrl)}"
+                    data-project-description="${description}"
+                    data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+                `;
             const titleMarkup = shouldShowTitle ? `<h4 class="card-title">${title}</h4>` : "";
             const imageContent = hasLink
                 ? `<a ${modalTriggerAttributes} aria-label="${title || "Project Preview"}">${imageMarkup}</a>`
@@ -586,7 +589,7 @@
             `;
         }
 
-        function createBusinessCard(project, index) {
+        function createBusinessCard(project, index, itemSource = "projects") {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
             const hasRealTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== "untitled project");
@@ -597,20 +600,23 @@
             const hasLink = Boolean(rawLink);
             const linkUrl = hasLink ? sanitizeUrl(rawLink) : "";
             const imageMarkup = `<img class="img-thumbnail" src="${imageUrl}" alt="${title}">`;
-            const modalTriggerAttributes = `
-                href="#"
-                class="thumbnail project-modal-trigger"
-                data-bs-toggle="modal"
-                data-bs-target="#modalShow"
-                data-image-id="${escapeHtml(project.id || String(index + 1))}"
-                data-toggle="modal"
-                data-title="${title}"
-                data-project-title="${modalTitle}"
-                data-project-image="${escapeHtml(imageUrl)}"
-                data-project-description="${description}"
-                data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
-                aria-label="${title}"
-            `;
+            const isDirectLink = hasLink && itemSource === "projects";
+            const modalTriggerAttributes = isDirectLink
+                ? `href="${escapeHtml(linkUrl)}" class="thumbnail direct-project-link" target="_blank" rel="noopener noreferrer" aria-label="${title}"`
+                : `
+                    href="#"
+                    class="thumbnail project-modal-trigger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalShow"
+                    data-image-id="${escapeHtml(project.id || String(index + 1))}"
+                    data-toggle="modal"
+                    data-title="${title}"
+                    data-project-title="${modalTitle}"
+                    data-project-image="${escapeHtml(imageUrl)}"
+                    data-project-description="${description}"
+                    data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+                    aria-label="${title}"
+                `;
             const imageContent = hasLink
                 ? `<a ${modalTriggerAttributes}>${imageMarkup}</a>`
                 : imageMarkup;
@@ -622,7 +628,7 @@
             `;
         }
 
-        function createLogoCard(project, index) {
+        function createLogoCard(project, index, itemSource = "projects") {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
             const hasRealTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== "untitled project");
@@ -633,20 +639,23 @@
             const hasLink = Boolean(rawLink);
             const linkUrl = hasLink ? sanitizeUrl(rawLink) : "";
             const imageMarkup = `<img class="img-thumbnail" src="${imageUrl}" alt="${title}">`;
-            const modalTriggerAttributes = `
-                href="#"
-                class="thumbnail project-modal-trigger"
-                data-bs-toggle="modal"
-                data-bs-target="#modalShow"
-                data-image-id="${escapeHtml(project.id || String(index + 1))}"
-                data-toggle="modal"
-                data-title="${title}"
-                data-project-title="${modalTitle}"
-                data-project-image="${escapeHtml(imageUrl)}"
-                data-project-description="${description}"
-                data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
-                aria-label="${title}"
-            `;
+            const isDirectLink = hasLink && itemSource === "projects";
+            const modalTriggerAttributes = isDirectLink
+                ? `href="${escapeHtml(linkUrl)}" class="thumbnail direct-project-link" target="_blank" rel="noopener noreferrer" aria-label="${title}"`
+                : `
+                    href="#"
+                    class="thumbnail project-modal-trigger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalShow"
+                    data-image-id="${escapeHtml(project.id || String(index + 1))}"
+                    data-toggle="modal"
+                    data-title="${title}"
+                    data-project-title="${modalTitle}"
+                    data-project-image="${escapeHtml(imageUrl)}"
+                    data-project-description="${description}"
+                    data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+                    aria-label="${title}"
+                `;
             const imageContent = hasLink
                 ? `<a ${modalTriggerAttributes}>${imageMarkup}</a>`
                 : imageMarkup;
@@ -658,7 +667,7 @@
             `;
         }
 
-        function createMobileAppCard(project, index) {
+        function createMobileAppCard(project, index, itemSource = "projects") {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
             const hasRealTitle = Boolean(rawTitle && rawTitle.toLowerCase() !== "untitled project");
@@ -669,20 +678,23 @@
             const hasLink = Boolean(rawLink);
             const linkUrl = hasLink ? sanitizeUrl(rawLink) : "";
             const imageMarkup = `<img src="${imageUrl}" class="w-100 shadow-1-strong" alt="${title}">`;
-            const modalTriggerAttributes = `
-                href="#"
-                class="project-modal-trigger mobile-app-trigger"
-                data-bs-toggle="modal"
-                data-bs-target="#modalShow"
-                data-image-id="${escapeHtml(project.id || String(index + 1))}"
-                data-toggle="modal"
-                data-title="${title}"
-                data-project-title="${modalTitle}"
-                data-project-image="${escapeHtml(imageUrl)}"
-                data-project-description="${description}"
-                data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
-                aria-label="${title}"
-            `;
+            const isDirectLink = hasLink && itemSource === "projects";
+            const modalTriggerAttributes = isDirectLink
+                ? `href="${escapeHtml(linkUrl)}" class="direct-project-link mobile-app-trigger" target="_blank" rel="noopener noreferrer" aria-label="${title}"`
+                : `
+                    href="#"
+                    class="project-modal-trigger mobile-app-trigger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalShow"
+                    data-image-id="${escapeHtml(project.id || String(index + 1))}"
+                    data-toggle="modal"
+                    data-title="${title}"
+                    data-project-title="${modalTitle}"
+                    data-project-image="${escapeHtml(imageUrl)}"
+                    data-project-description="${description}"
+                    data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+                    aria-label="${title}"
+                `;
             const imageContent = hasLink
                 ? `<a ${modalTriggerAttributes}>${imageMarkup}</a>`
                 : imageMarkup;
@@ -855,7 +867,7 @@
             dropdown.innerHTML = items.join("") || dropdown.innerHTML;
         }
 
-        function renderSubCategorySections(tabPaneId, subCategories, items) {
+        function renderSubCategorySections(tabPaneId, subCategories, items, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -877,7 +889,7 @@
                         return "";
                     }
 
-                    const cards = relatedItems.map(createWebCard);
+                    const cards = relatedItems.map((project) => createWebCard(project, itemSource));
                     const anchorId = getSubCategoryAnchorId(category);
 
                     return `
@@ -914,7 +926,8 @@
                 cardRenderer = createWebCard,
                 rowClass = "",
                 wrapperClass = "",
-                perRow = 3
+                perRow = 3,
+                itemSource = "projects"
             } = options;
 
             const sections = subCategories
@@ -932,7 +945,7 @@
                         return "";
                     }
 
-                    const cards = relatedItems.map((item, index) => cardRenderer(item, index));
+                    const cards = relatedItems.map((item, index) => cardRenderer(item, index, itemSource));
                     const sectionBody = rowClass
                         ? `<div class="row ${rowClass}">${cards.join("")}</div>`
                         : createRows(cards, perRow);
@@ -959,7 +972,7 @@
             `;
         }
 
-        function createGalleryGridItem(project, index) {
+        function createGalleryGridItem(project, index, itemSource = "projects") {
             const imageUrl = sanitizeUrl(project.imageUrl);
             const rawTitle = String(project.title || project.name || "").trim();
             const hasRealTitle = Boolean(rawTitle);
@@ -969,18 +982,24 @@
             const rawLink = String(project.link || "").trim();
             const hasLink = Boolean(rawLink);
             const linkUrl = hasLink ? sanitizeUrl(rawLink) : "";
+            const isDirectLink = hasLink && itemSource === "projects";
+            const clickableAttributes = isDirectLink
+                ? `href="${escapeHtml(linkUrl)}" class="direct-project-link" target="_blank" rel="noopener noreferrer"`
+                : `
+                    href="#"
+                    class="project-modal-trigger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalShow"
+                    data-project-title="${modalTitle}"
+                    data-project-image="${escapeHtml(imageUrl)}"
+                    data-project-description="${description}"
+                    data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+                `;
 
             return `
                 <li class="shown">
                     <a
-                        href="#"
-                        class="project-modal-trigger"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modalShow"
-                        data-project-title="${modalTitle}"
-                        data-project-image="${escapeHtml(imageUrl)}"
-                        data-project-description="${description}"
-                        data-project-link="${hasLink ? escapeHtml(linkUrl) : ""}"
+                        ${clickableAttributes}
                         aria-label="${title}"
                     >
                         <img src="${imageUrl}" alt="${title}">
@@ -989,7 +1008,7 @@
             `;
         }
 
-        function renderMerchandizingSubCategorySections(tabPaneId, categoryId, subCategories, items) {
+        function renderMerchandizingSubCategorySections(tabPaneId, categoryId, subCategories, items, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -1012,7 +1031,7 @@
                     }
 
                     const gridId = `grid-${categoryId}-${slugify(category.name)}`;
-                    const gridItems = relatedItems.map(createGalleryGridItem).join("");
+                    const gridItems = relatedItems.map((item, index) => createGalleryGridItem(item, index, itemSource)).join("");
                     const anchorId = getSubCategoryAnchorId(category);
 
                     return `
@@ -1042,7 +1061,7 @@
             }
         }
 
-        function renderGenericProjects(tabPaneId, projects) {
+        function renderGenericProjects(tabPaneId, projects, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -1054,7 +1073,7 @@
                 return;
             }
 
-            const cards = sortByCreatedAt(projects).map(createWebCard);
+            const cards = sortByCreatedAt(projects).map((project) => createWebCard(project, itemSource));
 
             tabPane.innerHTML = `
                 <div class="container text-center py-4">
@@ -1063,7 +1082,7 @@
             `;
         }
 
-        function renderBusinessCardProjects(tabPaneId, projects) {
+        function renderBusinessCardProjects(tabPaneId, projects, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -1075,7 +1094,9 @@
                 return;
             }
 
-            const cards = sortByCreatedAt(projects).map(createBusinessCard).join("");
+            const cards = sortByCreatedAt(projects)
+                .map((project, index) => createBusinessCard(project, index, itemSource))
+                .join("");
 
             tabPane.innerHTML = `
                 <div class="business-card-pane">
@@ -1088,7 +1109,7 @@
             `;
         }
 
-        function renderLogoProjects(tabPaneId, projects) {
+        function renderLogoProjects(tabPaneId, projects, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -1100,7 +1121,7 @@
                 return;
             }
 
-            const cards = sortByCreatedAt(projects).map(createLogoCard);
+            const cards = sortByCreatedAt(projects).map((project, index) => createLogoCard(project, index, itemSource));
 
             tabPane.innerHTML = `
                 <div class="logo-pane container">
@@ -1109,7 +1130,7 @@
             `;
         }
 
-        function renderMobileAppProjects(tabPaneId, projects) {
+        function renderMobileAppProjects(tabPaneId, projects, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane) {
@@ -1121,7 +1142,9 @@
                 return;
             }
 
-            const cards = sortByCreatedAt(projects).map(createMobileAppCard).join("");
+            const cards = sortByCreatedAt(projects)
+                .map((project, index) => createMobileAppCard(project, index, itemSource))
+                .join("");
 
             tabPane.innerHTML = `
                 <div class="mobile-app-pane container pt-5 text-center">
@@ -1132,7 +1155,7 @@
             `;
         }
 
-        function renderGalleryProjects(tabPaneId, projects) {
+        function renderGalleryProjects(tabPaneId, projects, itemSource = "projects") {
             const tabPane = document.getElementById(tabPaneId);
 
             if (!tabPane || !projects.length) {
@@ -1140,7 +1163,7 @@
             }
 
             const items = sortByCreatedAt(projects)
-                .map(createGalleryGridItem)
+                .map((project, index) => createGalleryGridItem(project, index, itemSource))
                 .join("");
 
             tabPane.innerHTML = `
@@ -1158,41 +1181,41 @@
             }
         }
 
-        function renderCategoryProjects(tabPaneId, projects, layout = "default") {
+        function renderCategoryProjects(tabPaneId, projects, layout = "default", itemSource = "projects") {
             switch (layout) {
                 case "business-card":
                 case "businesscard":
                 case "business-cards":
-                    renderBusinessCardProjects(tabPaneId, projects);
+                    renderBusinessCardProjects(tabPaneId, projects, itemSource);
                     return;
                 case "logo":
                 case "logos":
                 case "logo-design":
                 case "logo-designs":
-                    renderLogoProjects(tabPaneId, projects);
+                    renderLogoProjects(tabPaneId, projects, itemSource);
                     return;
                 case "mobile-app":
                 case "mobile-apps":
                 case "app-design":
                 case "app-designs":
-                    renderMobileAppProjects(tabPaneId, projects);
+                    renderMobileAppProjects(tabPaneId, projects, itemSource);
                     return;
                 case "gallery":
                 case "masonry":
                 case "media":
-                    renderGalleryProjects(tabPaneId, projects);
+                    renderGalleryProjects(tabPaneId, projects, itemSource);
                     return;
                 default:
-                    renderGenericProjects(tabPaneId, projects);
+                    renderGenericProjects(tabPaneId, projects, itemSource);
             }
         }
 
-        function renderCategorySubSections(tabPaneId, categoryId, subCategories, items, layout = "default") {
+        function renderCategorySubSections(tabPaneId, categoryId, subCategories, items, layout = "default", itemSource = "projects") {
             switch (layout) {
                 case "gallery":
                 case "masonry":
                 case "media":
-                    renderMerchandizingSubCategorySections(tabPaneId, categoryId, subCategories, items);
+                    renderMerchandizingSubCategorySections(tabPaneId, categoryId, subCategories, items, itemSource);
                     return;
                 case "business-card":
                 case "businesscard":
@@ -1200,7 +1223,8 @@
                     renderTypedSubCategorySections(tabPaneId, subCategories, items, {
                         cardRenderer: createBusinessCard,
                         rowClass: "",
-                        wrapperClass: "business-card-pane"
+                        wrapperClass: "business-card-pane",
+                        itemSource
                     });
                     return;
                 case "logo":
@@ -1210,7 +1234,8 @@
                     renderTypedSubCategorySections(tabPaneId, subCategories, items, {
                         cardRenderer: createLogoCard,
                         rowClass: "",
-                        wrapperClass: "logo-pane container"
+                        wrapperClass: "logo-pane container",
+                        itemSource
                     });
                     return;
                 case "mobile-app":
@@ -1220,11 +1245,12 @@
                     renderTypedSubCategorySections(tabPaneId, subCategories, items, {
                         cardRenderer: createMobileAppCard,
                         rowClass: "",
-                        wrapperClass: "mobile-app-pane container pt-5 text-center"
+                        wrapperClass: "mobile-app-pane container pt-5 text-center",
+                        itemSource
                     });
                     return;
                 default:
-                    renderSubCategorySections(tabPaneId, subCategories, items);
+                    renderSubCategorySections(tabPaneId, subCategories, items, itemSource);
             }
         }
 
@@ -1536,7 +1562,7 @@
                     renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
 
                     if (categoryItems.length) {
-                        renderCategorySubSections(tabPaneId, category.id, subCategories, categoryItems, categoryLayout);
+                        renderCategorySubSections(tabPaneId, category.id, subCategories, categoryItems, categoryLayout, itemSource);
                     } else {
                         renderNoDataState(tabPaneId, subCategories[0]?.name || category.name);
                     }
@@ -1544,7 +1570,7 @@
                     return;
                 }
 
-                renderCategoryProjects(tabPaneId, categoryItems, categoryLayout);
+                renderCategoryProjects(tabPaneId, categoryItems, categoryLayout, itemSource);
             });
 
             if (checkLinks) {
