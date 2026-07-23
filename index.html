@@ -36,28 +36,10 @@
     <meta itemprop="description"
         content="Design Spartans is a digital agency that provide logo design, web design &amp; development, digital marketing and other digital services to boost businesses">
     <meta itemprop="image" content="https://designspartansllc.web.app/meta-banner.jpg">
-    <script>
-        document.documentElement.classList.add('dynamic-portfolio-pending');
-    </script>
-    <style>
-        .dynamic-portfolio-pending #myTab,
-        .dynamic-portfolio-pending #myTabContent,
-        .dynamic-portfolio-pending #portfolio-title,
-        .dynamic-portfolio-pending #portfolio-description {
-            visibility: hidden;
-        }
-    </style>
 
 </head>
 
 <body>
-
-    <div class="page-loader" id="page-loader" aria-live="polite" aria-label="Loading content">
-        <div class="page-loader__inner">
-            <div class="page-loader__spinner"></div>
-            <p class="page-loader__text">Loading portfolio...</p>
-        </div>
-    </div>
 
     <div id="carouselExample" class="carousel slide">
         <div class="carousel-inner">
@@ -94,7 +76,9 @@
 
                 <div class="img-container">
                     <a href="https://designspartans.com/" target="_blank">
-                        <img id="portfolio-logo" alt="Design Spartans Logo" class="Design-Spartans-logo">
+                        <img id="portfolio-logo" alt="Design Spartans Logo"
+                            class="Design-Spartans-logo skeleton-shimmer"
+                            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
                     </a>
                 </div>
 
@@ -103,7 +87,10 @@
                         style="background-image: url('images/title-bg.svg'); margin-top: 60px; padding: 12px; ">Our
                         Recent
                         Projects</h2>
-                    <p class="p" id="portfolio-description"></p>
+                    <p class="p" id="portfolio-description">Everyone can talk the talk but hardly anyone follows it
+                        through. That&rsquo;s where the Design Spartans differ! Just like the Spartans from back in the
+                        day, our digital warriors never back down from a challenge and only stop when the client admits
+                        total satisfaction. Have a look at what we can do!</p>
                     <br>
                 </div>
             </div>
@@ -111,8 +98,42 @@
     </section>
 
     <section>
-        <ul class="nav nav-tabs" id="myTab" role="tablist"></ul>
-        <div class="tab-content" id="myTabContent"></div>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item"><span class="skeleton-pill"></span></li>
+            <li class="nav-item"><span class="skeleton-pill"></span></li>
+            <li class="nav-item"><span class="skeleton-pill"></span></li>
+            <li class="nav-item"><span class="skeleton-pill"></span></li>
+            <li class="nav-item"><span class="skeleton-pill"></span></li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane show active">
+                <div class="container py-5">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="skeleton-card">
+                                <div class="skeleton-shimmer skeleton-card__img"></div>
+                                <div class="skeleton-shimmer skeleton-card__line skeleton-card__line--title"></div>
+                                <div class="skeleton-shimmer skeleton-card__line"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="skeleton-card">
+                                <div class="skeleton-shimmer skeleton-card__img"></div>
+                                <div class="skeleton-shimmer skeleton-card__line skeleton-card__line--title"></div>
+                                <div class="skeleton-shimmer skeleton-card__line"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="skeleton-card">
+                                <div class="skeleton-shimmer skeleton-card__img"></div>
+                                <div class="skeleton-shimmer skeleton-card__line skeleton-card__line--title"></div>
+                                <div class="skeleton-shimmer skeleton-card__line"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- Modal ==============================-->
@@ -424,6 +445,26 @@
 
         let tabUrlSyncInitialized = false;
 
+        function relayoutGrids(pane) {
+            if (typeof window.Masonry !== "function" || typeof window.imagesLoaded !== "function") {
+                return;
+            }
+
+            pane.querySelectorAll(".grid").forEach((gridElement) => {
+                const existingInstance = window.Masonry.data ? window.Masonry.data(gridElement) : null;
+
+                if (existingInstance) {
+                    existingInstance.reloadItems();
+                    existingInstance.layout();
+                    return;
+                }
+
+                window.imagesLoaded(gridElement, () => {
+                    new window.Masonry(gridElement, { itemSelector: "li", transitionDuration: 0 });
+                });
+            });
+        }
+
         function initializeTabUrlSync(mainCategories = []) {
             const tabList = document.getElementById("myTab");
 
@@ -436,6 +477,13 @@
             const defaultTabSlug = mainCategories.length ? getCategoryTabSlug(mainCategories[0]) : "";
 
             tabList.addEventListener("shown.bs.tab", (event) => {
+                const paneSelector = event.target?.getAttribute("data-bs-target");
+                const pane = paneSelector ? document.querySelector(paneSelector) : null;
+
+                if (pane) {
+                    relayoutGrids(pane);
+                }
+
                 if (suppressNextTabUrlUpdate) {
                     suppressNextTabUrlUpdate = false;
                     return;
@@ -676,7 +724,10 @@
                 return;
             }
 
-            logoElement.src = primaryContent.logoUrl || "";
+            if (primaryContent.logoUrl) {
+                logoElement.src = primaryContent.logoUrl;
+                logoElement.classList.remove("skeleton-shimmer");
+            }
 
             if (faviconElement) {
                 faviconElement.href = primaryContent.logoUrl || "";
@@ -719,13 +770,7 @@
                 return;
             }
 
-            dropdown.innerHTML = `
-                <div class="row">
-                    <div class="col">
-                        <li><span class="dropdown-item">No data found</span></li>
-                    </div>
-                </div>
-            `;
+            dropdown.innerHTML = `<span class="dropdown-item dropdown-item--empty">No data found</span>`;
         }
 
         function renderTabs(mainCategories, categoriesWithDropdown = new Set()) {
@@ -751,14 +796,14 @@
 
                 if (hasDropdown) {
                     return `
-                        <li class="nav-item btn-group" role="presentation">
+                        <li class="nav-item btn-group has-dropdown" role="presentation">
                             <button type="button" class="nav-link dynamic-web-tab ${isActive ? "active" : ""}" id="${buttonId}" data-category-name="${escapeHtml(category.name)}"
                                 data-bs-toggle="tab" data-bs-target="#${paneId}" data-tab-slug="${tabSlug}" role="tab" aria-controls="${paneId}" aria-selected="${isActive}">
                                 ${escapeHtml(category.name)}
                             </button>
                             <button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split"
-                                data-bs-toggle="dropdown" aria-expanded="false"></button>
-                            <ul class="dropdown-menu dropdown-menu-lg" id="dropdown-${category.id}"></ul>
+                                data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false"></button>
+                            <div class="dropdown-menu mega-dropdown" id="dropdown-${category.id}"></div>
                         </li>
                     `;
                 }
@@ -807,26 +852,10 @@
                 const anchorId = getSubCategoryAnchorId(category);
                 const name = escapeHtml(String(category.name || "").toUpperCase());
 
-                return `
-                    <li>
-                        <a class="dropdown-item" href="#${anchorId}" onclick="changeTab(event, '${tabPaneId}', '${escapeJsString(anchorId)}')">${name}</a>
-                    </li>
-                `;
+                return `<a class="dropdown-item" href="#${anchorId}" onclick="changeTab(event, '${tabPaneId}', '${escapeJsString(anchorId)}')">${name}</a>`;
             });
 
-            const columns = [];
-
-            for (let i = 0; i < items.length; i += 4) {
-                columns.push(`<div class="col">${items.slice(i, i + 4).join("")}</div>`);
-            }
-
-            const rows = [];
-
-            for (let i = 0; i < columns.length; i += 4) {
-                rows.push(`<div class="row">${columns.slice(i, i + 4).join("")}</div>`);
-            }
-
-            dropdown.innerHTML = rows.join("") || dropdown.innerHTML;
+            dropdown.innerHTML = items.join("") || dropdown.innerHTML;
         }
 
         function renderSubCategorySections(tabPaneId, subCategories, items) {
@@ -1319,16 +1348,34 @@
 
         const PORTFOLIO_CACHE_KEY = "designspartans-portfolio-cache-v1";
         const PORTFOLIO_CACHE_TTL_MS = 15 * 60 * 1000;
+        const PORTFOLIO_CACHE_DB_NAME = "designspartans-portfolio-cache";
+        const PORTFOLIO_CACHE_STORE_NAME = "cache";
 
-        function readPortfolioCache() {
+        function openPortfolioCacheDb() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(PORTFOLIO_CACHE_DB_NAME, 1);
+
+                request.onupgradeneeded = () => {
+                    if (!request.result.objectStoreNames.contains(PORTFOLIO_CACHE_STORE_NAME)) {
+                        request.result.createObjectStore(PORTFOLIO_CACHE_STORE_NAME);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function readPortfolioCache() {
             try {
-                const raw = localStorage.getItem(PORTFOLIO_CACHE_KEY);
+                const db = await openPortfolioCacheDb();
+                const parsed = await new Promise((resolve, reject) => {
+                    const tx = db.transaction(PORTFOLIO_CACHE_STORE_NAME, "readonly");
+                    const request = tx.objectStore(PORTFOLIO_CACHE_STORE_NAME).get(PORTFOLIO_CACHE_KEY);
+                    request.onsuccess = () => resolve(request.result || null);
+                    request.onerror = () => reject(request.error);
+                });
 
-                if (!raw) {
-                    return null;
-                }
-
-                const parsed = JSON.parse(raw);
+                db.close();
 
                 if (!parsed || typeof parsed.timestamp !== "number") {
                     return null;
@@ -1344,9 +1391,18 @@
             }
         }
 
-        function writePortfolioCache(data) {
+        async function writePortfolioCache(data) {
             try {
-                localStorage.setItem(PORTFOLIO_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+                const db = await openPortfolioCacheDb();
+
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(PORTFOLIO_CACHE_STORE_NAME, "readwrite");
+                    tx.objectStore(PORTFOLIO_CACHE_STORE_NAME).put({ timestamp: Date.now(), data }, PORTFOLIO_CACHE_KEY);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                });
+
+                db.close();
             } catch (error) {
                 // Caching is a non-critical optimization; ignore storage errors (quota, privacy mode, etc).
             }
@@ -1361,6 +1417,68 @@
             ]);
 
             return { categories, projects, media, topContent };
+        }
+
+        function renderPortfolioShell(categories, topContent) {
+            renderTopContent(topContent);
+
+            const mainCategories = categories.filter((category) => !category.parentId);
+            const orderedMainCategories = sortCategories(mainCategories);
+
+            if (!orderedMainCategories.length) {
+                document.getElementById("myTab").innerHTML = "";
+                document.getElementById("myTabContent").innerHTML = `
+                    <div class="tab-pane show active">
+                        <div class="container text-center py-5">
+                            <h2 class="title-bg" style="background-image: url('images/title-bg.svg');">No data found</h2>
+                            <p class="p mb-0">No categories available right now.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const categoriesWithDropdown = new Set(
+                orderedMainCategories
+                    .filter((category) => categories.some((item) => item.parentId === category.id))
+                    .map((category) => category.id)
+            );
+
+            renderTabs(orderedMainCategories, categoriesWithDropdown);
+            initializeTabUrlSync(orderedMainCategories);
+
+            orderedMainCategories.forEach((category) => {
+                const tabPaneId = getTabPaneId(category.id);
+                const subCategories = sortCategories(
+                    categories.filter((item) => item.parentId === category.id)
+                );
+
+                if (subCategories.length) {
+                    renderCategoryDropdown(`dropdown-${category.id}`, tabPaneId, subCategories);
+                }
+
+                renderSkeletonState(tabPaneId);
+            });
+        }
+
+        function renderSkeletonState(tabPaneId, count = 6) {
+            const tabPane = document.getElementById(tabPaneId);
+
+            if (!tabPane) {
+                return;
+            }
+
+            const cards = Array.from({ length: count }).map(() => `
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="skeleton-card">
+                        <div class="skeleton-shimmer skeleton-card__img"></div>
+                        <div class="skeleton-shimmer skeleton-card__line skeleton-card__line--title"></div>
+                        <div class="skeleton-shimmer skeleton-card__line"></div>
+                    </div>
+                </div>
+            `).join("");
+
+            tabPane.innerHTML = `<div class="container py-5"><div class="row justify-content-center">${cards}</div></div>`;
         }
 
         function renderPortfolio({ categories, projects, media, topContent }, options = {}) {
@@ -1438,23 +1556,49 @@
         }
 
         async function loadPortfolioData() {
-            const cachedData = readPortfolioCache();
+            const cachedData = await readPortfolioCache();
 
             if (cachedData) {
                 renderPortfolio(cachedData, { checkLinks: false });
-                document.documentElement.classList.remove('dynamic-portfolio-pending');
-                document.body.classList.add('page-loaded');
+
+                try {
+                    const freshData = await fetchPortfolioData();
+                    writePortfolioCache(freshData);
+                    renderPortfolio(freshData);
+                } catch (error) {
+                    console.error("Failed to load portfolio data from Firestore.", error);
+                }
+
+                return;
             }
 
             try {
-                const freshData = await fetchPortfolioData();
+                const [categories, topContent] = await Promise.all([
+                    fetchCollection("categories"),
+                    fetchTopContent()
+                ]);
+
+                renderPortfolioShell(categories, topContent);
+
+                const [projects, media] = await Promise.all([
+                    fetchCollection("projects"),
+                    fetchCollection("media")
+                ]);
+
+                const freshData = { categories, projects, media, topContent };
                 writePortfolioCache(freshData);
                 renderPortfolio(freshData);
             } catch (error) {
                 console.error("Failed to load portfolio data from Firestore.", error);
-            } finally {
-                document.documentElement.classList.remove('dynamic-portfolio-pending');
-                document.body.classList.add('page-loaded');
+                document.getElementById("myTab").innerHTML = "";
+                document.getElementById("myTabContent").innerHTML = `
+                    <div class="tab-pane show active">
+                        <div class="container text-center py-5">
+                            <h2 class="title-bg" style="background-image: url('images/title-bg.svg');">No data found</h2>
+                            <p class="p mb-0">Could not load the portfolio right now. Please try again later.</p>
+                        </div>
+                    </div>
+                `;
             }
         }
 
