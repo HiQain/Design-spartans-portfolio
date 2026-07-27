@@ -54,17 +54,6 @@ export default function CategoryTabs({
       });
   };
 
-  // Quietly fetch every other tab in the background, right after first paint, so most tab
-  // clicks land on already-loaded data instead of showing a spinner. Fired together
-  // (not one-by-one) so the whole set finishes as fast as the slowest single category,
-  // not the sum of them.
-  useEffect(() => {
-    tabs.forEach((tab) => {
-      if (tab.id !== initialCategoryId) ensurePaneLoaded(tab.id);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Once the active tab's data has actually rendered, scroll to whichever subcategory
   // anchor is pending (from a shared URL or a dropdown click) and clear it.
   useEffect(() => {
@@ -165,6 +154,9 @@ export default function CategoryTabs({
                   <button
                     type="button"
                     onClick={() => selectTab(tab.id)}
+                    onMouseEnter={() => ensurePaneLoaded(tab.id)}
+                    onFocus={() => ensurePaneLoaded(tab.id)}
+                    onTouchStart={() => ensurePaneLoaded(tab.id)}
                     className={`font-condensed h-10 whitespace-nowrap px-4 text-sm font-semibold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                       hasDropdown ? "rounded-l-full" : "rounded-full"
                     } ${
@@ -181,6 +173,9 @@ export default function CategoryTabs({
                       type="button"
                       aria-label={`${tab.name} subcategories`}
                       onClick={() => toggleDropdown(tab.id)}
+                      onMouseEnter={() => ensurePaneLoaded(tab.id)}
+                      onFocus={() => ensurePaneLoaded(tab.id)}
+                      onTouchStart={() => ensurePaneLoaded(tab.id)}
                       className={`flex h-10 w-8 items-center justify-center rounded-r-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                         isActive
                           ? "bg-brand text-white"

@@ -21,12 +21,12 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
       <div className="pointer-events-none absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-accent/30 blur-[100px]" />
 
       <div className="relative mx-auto max-w-3xl px-4 text-center">
-        <div className="mx-auto mb-8 h-36 w-36 sm:h-44 sm:w-44">
+        <div className="mx-auto mb-8 h-64 w-64 sm:h-80 sm:w-80">
           <Image
             src="/logo.webp"
             alt="Design Spartans"
-            width={165}
-            height={165}
+            width={1200}
+            height={1200}
             priority
             className="h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
           />
