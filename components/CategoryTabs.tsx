@@ -143,7 +143,7 @@ export default function CategoryTabs({
   return (
     <div className="pt-10 sm:pt-14">
       <div ref={navWrapperRef} className="relative mx-auto max-w-6xl px-4">
-        <nav className="no-scrollbar flex flex-nowrap justify-center gap-2 overflow-x-auto pb-1">
+        <nav className="no-scrollbar flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 sm:justify-center">
           {tabs.map((tab) => {
             const isActive = tab.id === activeId;
             const hasDropdown = tab.subCategories.length > 0;

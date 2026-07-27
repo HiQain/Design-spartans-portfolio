@@ -50,8 +50,8 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in" />
           <Dialog.Content
-            className={`fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-3rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl bg-white shadow-2xl focus:outline-none ${
-              imageOnly ? "max-w-fit" : "max-w-5xl"
+            className={`fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-3rem)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl bg-white shadow-2xl focus:outline-none ${
+              imageOnly ? "w-fit" : "w-[calc(100vw-2rem)] sm:max-w-5xl"
             }`}
           >
             {activeProject?.title ? (
