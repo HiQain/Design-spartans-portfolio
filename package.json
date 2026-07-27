@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "UV_THREADPOOL_SIZE=32 next dev",
-    "build": "UV_THREADPOOL_SIZE=32 next build",
-    "start": "UV_THREADPOOL_SIZE=32 next start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {

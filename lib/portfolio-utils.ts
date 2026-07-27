@@ -71,7 +71,7 @@ export function getCategoryTabSlug(category: Category): string {
 }
 
 export function getSubCategoryAnchorId(category: Category): string {
-  return slugify(category.id || category.slug || category.name || "category");
+  return slugify(category.name || category.slug || category.id || "category");
 }
 
 function normalizeValue(value = ""): string {
