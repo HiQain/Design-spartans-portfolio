@@ -1,16 +1,10 @@
-export type FirestoreTimestampLike =
-  | { toMillis: () => number }
-  | { seconds: number }
-  | null
-  | undefined;
-
 export interface Category {
   id: string;
   name: string;
   slug?: string;
   parentId?: string | null;
   sortOrder?: number;
-  /** Milliseconds since epoch, normalized from Firestore Timestamp at fetch time. */
+  /** Milliseconds since epoch. */
   createdAt?: number;
   layout?: string;
   layoutType?: string;
@@ -36,7 +30,7 @@ export interface Project {
   subCategoryName?: string;
   categoryId?: string;
   categoryName?: string;
-  /** Milliseconds since epoch, normalized from Firestore Timestamp at fetch time. */
+  /** Milliseconds since epoch. */
   createdAt?: number;
 }
 

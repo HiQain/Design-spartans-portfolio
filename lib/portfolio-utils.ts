@@ -1,4 +1,4 @@
-import type { Category, CategoryLayout, FirestoreTimestampLike, Project } from "./types";
+import type { Category, CategoryLayout, Project } from "./types";
 
 export function slugify(value = ""): string {
   return String(value)
@@ -32,19 +32,7 @@ export function getProjectDescription(project: Project): string {
   return candidates.find((value) => String(value || "").trim())?.trim() ?? "";
 }
 
-/** Converts a raw Firestore Timestamp-like value (read directly from a doc) into millis since epoch. */
-export function normalizeTimestamp(value: FirestoreTimestampLike): number {
-  if (!value) return 0;
-  if (typeof (value as { toMillis?: () => number }).toMillis === "function") {
-    return (value as { toMillis: () => number }).toMillis();
-  }
-  if ("seconds" in value && typeof value.seconds === "number") {
-    return value.seconds * 1000;
-  }
-  return 0;
-}
-
-/** Sorts by the already-normalized `createdAt` (millis) on our app-level types. */
+/** Sorts by `createdAt` (millis). */
 export function sortByCreatedAt<T extends { createdAt?: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
 }
