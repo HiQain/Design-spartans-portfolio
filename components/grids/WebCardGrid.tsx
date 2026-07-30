@@ -5,7 +5,7 @@ import type { Project } from "@/lib/types";
 
 export default function WebCardGrid({ items, itemSource }: { items: Project[]; itemSource: "projects" | "media" }) {
   return (
-    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((project) => {
         const action = resolveCardAction(project, itemSource);
         const rawTitle = project.title || project.name || "";

@@ -55,7 +55,7 @@ export default function CategorySections({
 
       return (
         <div key={subCategory.id} className="mb-16 last:mb-0">
-          <h2 id={getSubCategoryAnchorId(subCategory)} className="section-heading mb-8 scroll-mt-28 text-2xl sm:text-3xl">
+          <h2 id={getSubCategoryAnchorId(subCategory)} className="section-heading mb-8 scroll-mt-4 text-2xl sm:text-3xl">
             {subCategory.name}
           </h2>
           <LayoutGrid layout={layout} items={relatedItems} itemSource={itemSource} />

@@ -36,9 +36,12 @@ export default function CategoryTabs({
   const [pendingAnchor, setPendingAnchor] = useState<string | null>(null);
   const hasSyncedFromUrl = useRef(false);
   const navWrapperRef = useRef<HTMLDivElement>(null);
+  const navScrollRef = useRef<HTMLElement>(null);
   const paneDataByIdRef = useRef(paneDataById);
   paneDataByIdRef.current = paneDataById;
   const loadingIdsRef = useRef(new Set<string>());
+  // Drives the mobile-only "you can scroll this row" indicator below the tab strip.
+  const [navScrollMetrics, setNavScrollMetrics] = useState({ canScroll: false, progress: 0, thumbRatio: 1 });
 
   const ensurePaneLoaded = (categoryId: string) => {
     if (paneDataByIdRef.current[categoryId] || loadingIdsRef.current.has(categoryId)) return;
@@ -64,12 +67,46 @@ export default function CategoryTabs({
     const anchor = pendingAnchor;
     setPendingAnchor(null);
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document.getElementById(anchor)?.scrollIntoView({ behavior: "auto", block: "start" });
-      });
+    const scrollToAnchor = () => {
+      document.getElementById(anchor)?.scrollIntoView({ behavior: "auto", block: "start" });
+    };
+
+    // Images in the pane (including sections above the target) often finish loading and
+    // reflow the page after this frame, which pushes the anchor away from the top and
+    // leaves the previous section's tail still visible - on both mobile and desktop.
+    // Re-run the scroll a few times as things settle so the heading actually lands (and
+    // stays) at the very top. Deliberately not cleaned up on re-run: setPendingAnchor(null)
+    // above itself changes this effect's own dependency, so a cleanup here would cancel
+    // these timers immediately, before any of them get a chance to fire.
+    [0, 150, 400, 900].forEach((delay) => {
+      window.setTimeout(() => requestAnimationFrame(scrollToAnchor), delay);
     });
   }, [pendingAnchor, activeId, paneDataById]);
+
+  // Tracks how far the horizontally-scrollable tab strip has scrolled so the mobile
+  // indicator bar below it can reflect scroll position (and hide once nothing overflows).
+  useEffect(() => {
+    const nav = navScrollRef.current;
+    if (!nav) return;
+
+    const updateScrollMetrics = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = nav;
+      const maxScroll = scrollWidth - clientWidth;
+      setNavScrollMetrics({
+        canScroll: maxScroll > 1,
+        progress: maxScroll > 0 ? scrollLeft / maxScroll : 0,
+        thumbRatio: Math.min(1, clientWidth / scrollWidth),
+      });
+    };
+
+    updateScrollMetrics();
+    nav.addEventListener("scroll", updateScrollMetrics, { passive: true });
+    window.addEventListener("resize", updateScrollMetrics);
+    return () => {
+      nav.removeEventListener("scroll", updateScrollMetrics);
+      window.removeEventListener("resize", updateScrollMetrics);
+    };
+  }, [tabs]);
 
   const activateBySlug = (slug: string, anchorId?: string) => {
     const tab = tabs.find((item) => item.tabSlug === slug);
@@ -142,10 +179,17 @@ export default function CategoryTabs({
 
   const activeDropdownTab = tabs.find((tab) => tab.id === openDropdown);
 
+  const NAV_INDICATOR_WIDTH = 64;
+  const navThumbWidth = Math.max(18, navScrollMetrics.thumbRatio * NAV_INDICATOR_WIDTH);
+  const navThumbOffset = navScrollMetrics.progress * (NAV_INDICATOR_WIDTH - navThumbWidth);
+
   return (
     <div className="pt-10 sm:pt-14">
       <div ref={navWrapperRef} className="relative mx-auto max-w-6xl px-4">
-        <nav className="no-scrollbar flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 sm:justify-center">
+        <nav
+          ref={navScrollRef}
+          className="no-scrollbar flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 sm:justify-center"
+        >
           {tabs.map((tab) => {
             const isActive = tab.id === activeId;
             const hasDropdown = tab.subCategories.length > 0;
@@ -192,6 +236,15 @@ export default function CategoryTabs({
             );
           })}
         </nav>
+
+        {navScrollMetrics.canScroll ? (
+          <div className="mx-auto mt-2 h-1 w-16 overflow-hidden rounded-full bg-neutral-200 sm:hidden">
+            <div
+              className="h-full rounded-full bg-brand"
+              style={{ width: `${navThumbWidth}px`, transform: `translateX(${navThumbOffset}px)` }}
+            />
+          </div>
+        ) : null}
 
         {activeDropdownTab ? (
           <div className="absolute left-1/2 top-full z-20 mt-3 w-[min(72rem,92vw)] max-w-md -translate-x-1/2 rounded-2xl border-t-4 border-brand bg-white p-5 shadow-2xl sm:max-w-none">

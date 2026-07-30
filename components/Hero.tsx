@@ -7,7 +7,7 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
     "Everyone can talk the talk but hardly anyone follows it through. That’s where the Design Spartans differ! Just like the Spartans from back in the day, our digital warriors never back down from a challenge and only stop when the client admits total satisfaction. Have a look at what we can do!";
 
   return (
-    <section className="relative overflow-hidden bg-[#0a0e1a] py-14 sm:py-20">
+    <section className="relative overflow-hidden bg-[#0a0e1a] py-6 sm:py-6">
       <div
         className="absolute inset-0 opacity-[0.15]"
         style={{

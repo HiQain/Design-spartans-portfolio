@@ -92,9 +92,11 @@ export function getCategoryLayout(category: Category, itemSource: "projects" | "
   return itemSource === "media" ? "gallery" : "default";
 }
 
+const PLACEHOLDER_TITLES = new Set(["untitled", "untitled project"]);
+
 export function isRealTitle(rawTitle?: string): boolean {
   const title = String(rawTitle || "").trim();
-  return Boolean(title && title.toLowerCase() !== "untitled project");
+  return Boolean(title && !PLACEHOLDER_TITLES.has(title.toLowerCase()));
 }
 
 export type CardAction =

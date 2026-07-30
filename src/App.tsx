@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import CategoryTabs, { type TabDefinition } from "@/components/CategoryTabs";
 import Hero from "@/components/Hero";
 import { ProjectModalProvider } from "@/components/ProjectModal";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 import { getCategories, getCategoryPaneData, getTopContent } from "@/lib/portfolio";
 import { getCategoryTabSlug, getSubCategoryAnchorId, sortCategories } from "@/lib/portfolio-utils";
 import type { Category, CategoryPaneData, TopContent } from "@/lib/types";
@@ -102,33 +103,36 @@ export default function App() {
   const tabs = buildTabs(categories);
 
   return (
-    <main>
-      <Hero topContent={topContent} />
+    <>
+      <main>
+        <Hero topContent={topContent} />
 
-      {isLoading ? (
-        <div className="flex justify-center py-20">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-        </div>
-      ) : error ? (
-        <div className="px-4 py-20 text-center">
-          <h2 className="section-heading text-3xl">Unable to load portfolio</h2>
-          <p className="mt-4 font-condensed text-lg text-neutral-500">{error}</p>
-        </div>
-      ) : initialCategoryId && initialPaneData ? (
-        <ProjectModalProvider>
-          <CategoryTabs
-            categories={categories}
-            tabs={tabs}
-            initialCategoryId={initialCategoryId}
-            initialPaneData={initialPaneData}
-          />
-        </ProjectModalProvider>
-      ) : (
-        <div className="py-20 text-center">
-          <h2 className="section-heading text-3xl">No data found</h2>
-          <p className="mt-4 font-condensed text-lg text-neutral-500">No categories available right now.</p>
-        </div>
-      )}
-    </main>
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+          </div>
+        ) : error ? (
+          <div className="px-4 py-20 text-center">
+            <h2 className="section-heading text-3xl">Unable to load portfolio</h2>
+            <p className="mt-4 font-condensed text-lg text-neutral-500">{error}</p>
+          </div>
+        ) : initialCategoryId && initialPaneData ? (
+          <ProjectModalProvider>
+            <CategoryTabs
+              categories={categories}
+              tabs={tabs}
+              initialCategoryId={initialCategoryId}
+              initialPaneData={initialPaneData}
+            />
+          </ProjectModalProvider>
+        ) : (
+          <div className="py-20 text-center">
+            <h2 className="section-heading text-3xl">No data found</h2>
+            <p className="mt-4 font-condensed text-lg text-neutral-500">No categories available right now.</p>
+          </div>
+        )}
+      </main>
+      <ScrollToTopButton />
+    </>
   );
 }
