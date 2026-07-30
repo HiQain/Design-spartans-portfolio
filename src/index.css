@@ -42,21 +42,19 @@ body {
 
 .section-heading {
   font-family: var(--font-acme);
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--foreground);
-  position: relative;
-  display: inline-block;
-}
-
-.section-heading::after {
-  content: "";
+  color: #fff;
   display: block;
-  height: 4px;
-  width: 64px;
-  margin: 14px auto 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--brand), var(--accent));
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  padding: 1.1rem 3rem;
+  background-image: url("/images/heading-banner.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
 .no-scrollbar {

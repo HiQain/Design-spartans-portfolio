@@ -14,7 +14,15 @@ export default function WebCardGrid({ items, itemSource }: { items: Project[]; i
         return (
           <div key={project.id} className="group">
             <ProjectCardLink action={action} className="block w-full text-left" ariaLabel={showTitle ? rawTitle : "Project preview"}>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-100 shadow-md ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+              <div
+                className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-100 shadow-md transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl"
+                style={{
+                  borderTop: "5px solid rgb(24, 23, 23)",
+                  borderBottom: "5px solid rgb(66, 66, 66)",
+                  borderLeft: "5px solid rgb(70, 70, 70)",
+                  borderRight: "5px solid rgb(0, 0, 0)",
+                }}
+              >
                 {project.imageUrl ? (
                   <SmartImage
                     src={project.imageUrl}
