@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Acme&family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@400;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -6,6 +7,9 @@
   --brand: #e6254c;
   --brand-dark: #c01d3f;
   --accent: #2cafe3;
+  --font-acme: "Acme", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-roboto-condensed: "Roboto Condensed", sans-serif;
 }
 
 @theme inline {
@@ -19,7 +23,14 @@
   --font-condensed: var(--font-roboto-condensed);
 }
 
+html {
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
+  min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
 }
@@ -30,7 +41,7 @@ body {
 }
 
 .section-heading {
-  font-family: var(--font-display);
+  font-family: var(--font-acme);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--foreground);

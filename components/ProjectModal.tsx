@@ -1,7 +1,6 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import Image from "next/image";
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { X } from "./icons";
 
@@ -83,7 +82,6 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
                     imageOnly ? "max-h-[70vh]" : "w-full md:w-[58%]"
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={activeProject.imageUrl}
                     alt={activeProject.title || "Project preview"}

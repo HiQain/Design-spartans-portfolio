@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { TopContent } from "@/lib/types";
 
 export default function Hero({ topContent }: { topContent: TopContent | null }) {
@@ -22,12 +21,11 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
 
       <div className="relative mx-auto max-w-3xl px-4 text-center">
         <div className="mx-auto mb-8 h-64 w-64 sm:h-80 sm:w-80">
-          <Image
+          <img
             src="/logo.webp"
             alt="Design Spartans"
-            width={1200}
-            height={1200}
-            priority
+            loading="eager"
+            decoding="async"
             className="h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
           />
         </div>

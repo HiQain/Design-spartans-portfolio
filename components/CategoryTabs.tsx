@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import CategorySections from "@/components/CategorySections";
 import MediaCategoryPane from "@/components/MediaCategoryPane";
 import { fetchCategoryPaneData } from "@/lib/portfolio-client";
-import type { CategoryPaneData } from "@/lib/portfolio";
+import type { Category, CategoryPaneData } from "@/lib/types";
 import { ChevronDown } from "./icons";
 
 export interface TabDefinition {
@@ -15,10 +15,12 @@ export interface TabDefinition {
 }
 
 export default function CategoryTabs({
+  categories,
   tabs,
   initialCategoryId,
   initialPaneData,
 }: {
+  categories: Category[];
   tabs: TabDefinition[];
   initialCategoryId: string;
   initialPaneData: CategoryPaneData;
@@ -42,7 +44,7 @@ export default function CategoryTabs({
     if (paneDataByIdRef.current[categoryId] || loadingIdsRef.current.has(categoryId)) return;
 
     loadingIdsRef.current.add(categoryId);
-    fetchCategoryPaneData(categoryId)
+    fetchCategoryPaneData(categoryId, categories)
       .then((data) => {
         setPaneDataById((prev) => ({ ...prev, [categoryId]: data }));
       })

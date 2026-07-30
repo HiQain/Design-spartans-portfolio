@@ -49,6 +49,15 @@ export type CategoryLayout =
   | "mobile-app"
   | "gallery";
 
+export interface CategoryPaneData {
+  subCategories: Category[];
+  itemSource: "projects" | "media";
+  layout: CategoryLayout;
+  items: Project[];
+  mediaCursor: number | null;
+  mediaHasMore: boolean;
+}
+
 export interface MediaPage {
   items: MediaItem[];
   /** createdAt (ms since epoch) of the last item, used as the next page's startAfter cursor. */

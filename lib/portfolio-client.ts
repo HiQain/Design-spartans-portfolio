@@ -1,28 +1,36 @@
-"use client";
+import { apiGet } from "./api";
+import { buildCategoryPaneData } from "./portfolio-utils";
+import type { Category, CategoryPaneData, MediaPage, Project } from "./types";
 
-import type { MediaPage } from "./types";
-import type { CategoryPaneData } from "./portfolio";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!.replace(/\/+$/, "");
 const CATEGORY_PAGE_SIZE = 10;
 
-export async function fetchCategoryPaneData(categoryId: string): Promise<CategoryPaneData> {
-  const response = await fetch(`/api/category/${categoryId}`);
-  if (!response.ok) {
-    throw new Error(`Failed to load category "${categoryId}": ${response.status}`);
+export async function fetchCategoryPaneData(categoryId: string, allCategories: Category[]): Promise<CategoryPaneData> {
+  const category = allCategories.find((item) => item.id === categoryId);
+  if (!category) {
+    throw new Error(`Category "${categoryId}" not found.`);
   }
-  return response.json();
+
+  const mediaPage = await apiGet<MediaPage>("/media", {
+    mainCategoryId: categoryId,
+    limit: CATEGORY_PAGE_SIZE,
+  });
+
+  const projects = mediaPage.items.length
+    ? []
+    : await apiGet<Project[]>("/projects", { mainCategoryId: categoryId });
+
+  return buildCategoryPaneData({
+    category,
+    allCategories,
+    mediaPage,
+    projects,
+  });
 }
 
 export async function fetchNextMediaPage(categoryId: string, cursorMillis: number | null): Promise<MediaPage> {
-  const url = new URL(`${API_BASE_URL}/media`);
-  url.searchParams.set("mainCategoryId", categoryId);
-  url.searchParams.set("limit", String(CATEGORY_PAGE_SIZE));
-  if (cursorMillis != null) url.searchParams.set("cursor", String(cursorMillis));
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to load media page for "${categoryId}": ${response.status}`);
-  }
-  return response.json();
+  return apiGet<MediaPage>("/media", {
+    mainCategoryId: categoryId,
+    limit: CATEGORY_PAGE_SIZE,
+    cursor: cursorMillis ?? undefined,
+  });
 }

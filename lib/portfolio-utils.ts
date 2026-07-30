@@ -1,4 +1,4 @@
-import type { Category, CategoryLayout, Project } from "./types";
+import type { Category, CategoryLayout, CategoryPaneData, MediaPage, Project } from "./types";
 
 export function slugify(value = ""): string {
   return String(value)
@@ -123,5 +123,39 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
       imageUrl: sanitizeUrl(project.imageUrl),
       link: hasLink ? sanitizeUrl(link) : "",
     },
+  };
+}
+
+export function buildCategoryPaneData({
+  category,
+  allCategories,
+  mediaPage,
+  projects,
+}: {
+  category: Category;
+  allCategories: Category[];
+  mediaPage: MediaPage;
+  projects: Project[];
+}): CategoryPaneData {
+  const subCategories = sortCategories(allCategories.filter((item) => item.parentId === category.id));
+
+  if (mediaPage.items.length) {
+    return {
+      subCategories,
+      itemSource: "media",
+      layout: getCategoryLayout(category, "media"),
+      items: mediaPage.items,
+      mediaCursor: mediaPage.cursor,
+      mediaHasMore: mediaPage.hasMore,
+    };
+  }
+
+  return {
+    subCategories,
+    itemSource: "projects",
+    layout: getCategoryLayout(category, "projects"),
+    items: projects,
+    mediaCursor: null,
+    mediaHasMore: false,
   };
 }
