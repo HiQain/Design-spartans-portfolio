@@ -5,7 +5,7 @@ import type { Project } from "@/lib/types";
 
 export default function BusinessCardGrid({ items, itemSource }: { items: Project[]; itemSource: "projects" | "media" }) {
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {items.map((project) => {
         const action = resolveCardAction(project, itemSource);
         const title = project.title || project.name || "Business card";

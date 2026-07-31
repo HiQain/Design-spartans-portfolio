@@ -1,7 +1,6 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import Image from "next/image";
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { X } from "./icons";
 
@@ -50,11 +49,12 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in" />
           <Dialog.Content
-            className={`fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-3rem)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl bg-white shadow-2xl focus:outline-none ${
-              imageOnly ? "w-fit" : "w-[calc(100vw-2rem)] sm:max-w-5xl"
-            }`}
+            className={`fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 focus:outline-none ${imageOnly
+              ? "max-h-[calc(100vh-1rem)] max-w-[calc(100vw-1rem)] w-fit"
+              : "max-h-[calc(100vh-3rem)] max-w-[calc(100vw-2rem)] w-[calc(100vw-2rem)] overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-w-5xl"
+              }`}
           >
-            {activeProject?.title ? (
+            {!imageOnly && activeProject?.title ? (
               <Dialog.Title className="px-6 pt-5 font-condensed text-xl font-bold uppercase tracking-wide text-brand sm:px-8 sm:text-2xl">
                 {activeProject.title}
               </Dialog.Title>
@@ -67,32 +67,36 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
 
             <Dialog.Close
               aria-label="Close"
-              className="absolute right-4 top-4 z-10 rounded-full bg-white/90 p-1.5 text-neutral-700 shadow transition hover:bg-white hover:text-brand"
+              className={`absolute right-3 top-3 z-10 rounded-full p-1.5 shadow transition ${imageOnly
+                ? "bg-black/60 text-white hover:bg-black/80"
+                : "bg-white/90 text-neutral-700 hover:bg-white hover:text-brand"
+                }`}
             >
               <X className="h-5 w-5" />
             </Dialog.Close>
 
-            <div
-              className={`flex max-h-[calc(100vh-8rem)] flex-col gap-5 overflow-y-auto p-6 sm:p-8 ${
-                imageOnly ? "" : "md:flex-row md:items-start"
-              }`}
-            >
-              {activeProject?.imageUrl ? (
-                <div
-                  className={`relative shrink-0 overflow-hidden rounded-2xl bg-neutral-100 shadow-md ${
-                    imageOnly ? "max-h-[70vh]" : "w-full md:w-[58%]"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={activeProject.imageUrl}
-                    alt={activeProject.title || "Project preview"}
-                    className={imageOnly ? "max-h-[70vh] w-auto object-contain" : "h-auto w-full object-contain"}
-                  />
-                </div>
-              ) : null}
+            {imageOnly ? (
+              activeProject?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={activeProject.imageUrl}
+                  alt="Project preview"
+                  className="block max-h-[calc(100vh-1rem)] max-w-[calc(100vw-1rem)] w-auto rounded-2xl object-contain"
+                />
+              ) : null
+            ) : (
+              <div className="flex max-h-[calc(100vh-8rem)] flex-col gap-5 overflow-y-auto p-6 sm:p-8 md:flex-row md:items-start">
+                {activeProject?.imageUrl ? (
+                  <div className="relative w-full shrink-0 overflow-hidden rounded-2xl bg-neutral-100 shadow-md md:w-[58%]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={activeProject.imageUrl}
+                      alt={activeProject.title || "Project preview"}
+                      className="h-auto w-full object-contain"
+                    />
+                  </div>
+                ) : null}
 
-              {!imageOnly && (
                 <div className="flex min-w-0 flex-1 flex-col gap-4 text-left">
                   {activeProject?.description ? (
                     <p className="font-sans leading-relaxed text-neutral-700">{activeProject.description}</p>
@@ -108,8 +112,8 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
                     </a>
                   ) : null}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

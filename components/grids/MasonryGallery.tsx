@@ -7,7 +7,7 @@ import type { Project } from "@/lib/types";
 
 export default function MasonryGallery({ items, itemSource }: { items: Project[]; itemSource: "projects" | "media" }) {
   return (
-    <div className="columns-2 gap-3 sm:columns-3 lg:columns-5 [column-fill:_balance]">
+    <div className="columns-1 gap-3 md:columns-3 lg:columns-5 [column-fill:_balance]">
       {items.map((project, index) => {
         const action = resolveCardAction(project, itemSource);
         const title = project.title || project.name || `Project ${index + 1}`;
@@ -27,9 +27,6 @@ export default function MasonryGallery({ items, itemSource }: { items: Project[]
               className="block w-full overflow-hidden rounded-xl bg-neutral-100 shadow-md ring-1 ring-black/5 transition hover:shadow-xl"
             >
               {project.imageUrl ? (
-                // Intrinsic (varying) aspect ratios drive the masonry layout, so this uses
-                // a plain lazy-loaded <img> instead of next/image's fixed-box modes.
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={project.imageUrl} alt={title} loading="lazy" decoding="async" className="block w-full" />
               ) : null}
             </ProjectCardLink>

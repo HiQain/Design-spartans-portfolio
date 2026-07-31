@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { TopContent } from "@/lib/types";
 
 export default function Hero({ topContent }: { topContent: TopContent | null }) {
@@ -8,7 +7,7 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
     "Everyone can talk the talk but hardly anyone follows it through. That’s where the Design Spartans differ! Just like the Spartans from back in the day, our digital warriors never back down from a challenge and only stop when the client admits total satisfaction. Have a look at what we can do!";
 
   return (
-    <section className="relative overflow-hidden bg-[#0a0e1a] py-14 sm:py-20">
+    <section className="relative overflow-hidden bg-[#0a0e1a] py-6 sm:py-6">
       <div
         className="absolute inset-0 opacity-[0.15]"
         style={{
@@ -22,12 +21,11 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
 
       <div className="relative mx-auto max-w-3xl px-4 text-center">
         <div className="mx-auto mb-8 h-64 w-64 sm:h-80 sm:w-80">
-          <Image
+          <img
             src="/logo.webp"
             alt="Design Spartans"
-            width={1200}
-            height={1200}
-            priority
+            loading="eager"
+            decoding="async"
             className="h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
           />
         </div>

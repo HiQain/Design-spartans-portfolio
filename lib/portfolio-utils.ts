@@ -1,4 +1,4 @@
-import type { Category, CategoryLayout, FirestoreTimestampLike, Project } from "./types";
+import type { Category, CategoryLayout, CategoryPaneData, MediaPage, Project } from "./types";
 
 export function slugify(value = ""): string {
   return String(value)
@@ -32,19 +32,7 @@ export function getProjectDescription(project: Project): string {
   return candidates.find((value) => String(value || "").trim())?.trim() ?? "";
 }
 
-/** Converts a raw Firestore Timestamp-like value (read directly from a doc) into millis since epoch. */
-export function normalizeTimestamp(value: FirestoreTimestampLike): number {
-  if (!value) return 0;
-  if (typeof (value as { toMillis?: () => number }).toMillis === "function") {
-    return (value as { toMillis: () => number }).toMillis();
-  }
-  if ("seconds" in value && typeof value.seconds === "number") {
-    return value.seconds * 1000;
-  }
-  return 0;
-}
-
-/** Sorts by the already-normalized `createdAt` (millis) on our app-level types. */
+/** Sorts by `createdAt` (millis). */
 export function sortByCreatedAt<T extends { createdAt?: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
 }
@@ -104,9 +92,11 @@ export function getCategoryLayout(category: Category, itemSource: "projects" | "
   return itemSource === "media" ? "gallery" : "default";
 }
 
+const PLACEHOLDER_TITLES = new Set(["untitled", "untitled project"]);
+
 export function isRealTitle(rawTitle?: string): boolean {
   const title = String(rawTitle || "").trim();
-  return Boolean(title && title.toLowerCase() !== "untitled project");
+  return Boolean(title && !PLACEHOLDER_TITLES.has(title.toLowerCase()));
 }
 
 export type CardAction =
@@ -135,5 +125,39 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
       imageUrl: sanitizeUrl(project.imageUrl),
       link: hasLink ? sanitizeUrl(link) : "",
     },
+  };
+}
+
+export function buildCategoryPaneData({
+  category,
+  allCategories,
+  mediaPage,
+  projects,
+}: {
+  category: Category;
+  allCategories: Category[];
+  mediaPage: MediaPage;
+  projects: Project[];
+}): CategoryPaneData {
+  const subCategories = sortCategories(allCategories.filter((item) => item.parentId === category.id));
+
+  if (mediaPage.items.length) {
+    return {
+      subCategories,
+      itemSource: "media",
+      layout: getCategoryLayout(category, "media"),
+      items: mediaPage.items,
+      mediaCursor: mediaPage.cursor,
+      mediaHasMore: mediaPage.hasMore,
+    };
+  }
+
+  return {
+    subCategories,
+    itemSource: "projects",
+    layout: getCategoryLayout(category, "projects"),
+    items: projects,
+    mediaCursor: null,
+    mediaHasMore: false,
   };
 }
