@@ -23,6 +23,7 @@ export interface Project {
   details?: string;
   shortDescription?: string;
   imageUrl?: string;
+  secondaryImageUrl?: string;
   link?: string;
   mainCategoryId?: string;
   mainCategoryName?: string;
@@ -30,6 +31,9 @@ export interface Project {
   subCategoryName?: string;
   categoryId?: string;
   categoryName?: string;
+  playStoreLink?: string;
+  appStoreLink?: string;
+  sortOrder?: number;
   /** Milliseconds since epoch. */
   createdAt?: number;
 }
@@ -53,14 +57,23 @@ export interface CategoryPaneData {
   subCategories: Category[];
   itemSource: "projects" | "media";
   layout: CategoryLayout;
+  /** Used for itemSource "projects", and for "media" when there are no subCategories. */
   items: Project[];
-  mediaCursor: number | null;
+  mediaCursor: string | null;
   mediaHasMore: boolean;
+  /**
+   * Used for itemSource "media" when subCategories.length > 0: one independently
+   * paginated page per subcategory, keyed by subCategoryId. Fetching/paginating media
+   * per-subcategory (instead of one flat feed for the whole main category) keeps a
+   * subcategory's own manual sort order from being buried behind another, untouched
+   * subcategory's items - see MediaSubCategoryPane.
+   */
+  mediaPagesBySubCategory: Record<string, MediaPage> | null;
 }
 
 export interface MediaPage {
   items: MediaItem[];
-  /** createdAt (ms since epoch) of the last item, used as the next page's startAfter cursor. */
-  cursor: number | null;
+  /** Opaque keyset cursor ("sortOrder.createdAt.id") for the next page; pass back as-is. */
+  cursor: string | null;
   hasMore: boolean;
 }

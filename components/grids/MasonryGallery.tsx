@@ -7,7 +7,7 @@ import type { Project } from "@/lib/types";
 
 export default function MasonryGallery({ items, itemSource }: { items: Project[]; itemSource: "projects" | "media" }) {
   return (
-    <div className="columns-1 gap-3 md:columns-3 lg:columns-5 [column-fill:_balance]">
+    <div className="columns-1 gap-3 md:columns-3 lg:columns-4 [column-fill:_balance]">
       {items.map((project, index) => {
         const action = resolveCardAction(project, itemSource);
         const title = project.title || project.name || `Project ${index + 1}`;

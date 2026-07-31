@@ -1,5 +1,5 @@
 import { apiGet } from "./api";
-import { buildCategoryPaneData } from "./portfolio-utils";
+import { loadCategoryPaneData } from "./portfolio-utils";
 import type { Category, CategoryPaneData, MediaPage, Project } from "./types";
 
 const CATEGORY_PAGE_SIZE = 10;
@@ -10,27 +10,28 @@ export async function fetchCategoryPaneData(categoryId: string, allCategories: C
     throw new Error(`Category "${categoryId}" not found.`);
   }
 
-  const mediaPage = await apiGet<MediaPage>("/media", {
-    mainCategoryId: categoryId,
-    limit: CATEGORY_PAGE_SIZE,
-  });
-
-  const projects = mediaPage.items.length
-    ? []
-    : await apiGet<Project[]>("/projects", { mainCategoryId: categoryId });
-
-  return buildCategoryPaneData({
+  return loadCategoryPaneData({
     category,
     allCategories,
-    mediaPage,
-    projects,
+    fetchMedia: (subCategoryId) =>
+      apiGet<MediaPage>("/media", {
+        mainCategoryId: categoryId,
+        subCategoryId: subCategoryId ?? undefined,
+        limit: CATEGORY_PAGE_SIZE,
+      }),
+    fetchProjects: () => apiGet<Project[]>("/projects", { mainCategoryId: categoryId }),
   });
 }
 
-export async function fetchNextMediaPage(categoryId: string, cursorMillis: number | null): Promise<MediaPage> {
+export async function fetchNextMediaPage(
+  categoryId: string,
+  cursor: string | null,
+  subCategoryId?: string | null,
+): Promise<MediaPage> {
   return apiGet<MediaPage>("/media", {
     mainCategoryId: categoryId,
+    subCategoryId: subCategoryId ?? undefined,
     limit: CATEGORY_PAGE_SIZE,
-    cursor: cursorMillis ?? undefined,
+    cursor: cursor ?? undefined,
   });
 }

@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import CategorySections from "@/components/CategorySections";
+import MediaSubCategoryPane from "@/components/MediaSubCategoryPane";
 import { fetchNextMediaPage } from "@/lib/portfolio-client";
-import type { Category, CategoryLayout, Project } from "@/lib/types";
+import type { Category, CategoryLayout, MediaPage, Project } from "@/lib/types";
 
 export default function MediaCategoryPane({
   categoryId,
@@ -12,12 +13,55 @@ export default function MediaCategoryPane({
   initialItems,
   initialCursor,
   initialHasMore,
+  initialSubCategoryPages,
 }: {
   categoryId: string;
   subCategories: Category[];
   layout: CategoryLayout;
   initialItems: Project[];
-  initialCursor: number | null;
+  initialCursor: string | null;
+  initialHasMore: boolean;
+  initialSubCategoryPages: Record<string, MediaPage> | null;
+}) {
+  if (subCategories.length > 0) {
+    return (
+      <div>
+        {subCategories.map((subCategory) => (
+          <MediaSubCategoryPane
+            key={subCategory.id}
+            categoryId={categoryId}
+            subCategory={subCategory}
+            layout={layout}
+            initialPage={initialSubCategoryPages?.[subCategory.id] ?? { items: [], cursor: null, hasMore: false }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <FlatMediaCategoryPane
+      categoryId={categoryId}
+      layout={layout}
+      initialItems={initialItems}
+      initialCursor={initialCursor}
+      initialHasMore={initialHasMore}
+    />
+  );
+}
+
+/** No subcategories to bucket into, so a single shared feed for the whole category is fine. */
+function FlatMediaCategoryPane({
+  categoryId,
+  layout,
+  initialItems,
+  initialCursor,
+  initialHasMore,
+}: {
+  categoryId: string;
+  layout: CategoryLayout;
+  initialItems: Project[];
+  initialCursor: string | null;
   initialHasMore: boolean;
 }) {
   const [items, setItems] = useState(initialItems);
@@ -65,7 +109,7 @@ export default function MediaCategoryPane({
 
   return (
     <div>
-      <CategorySections subCategories={subCategories} items={items} itemSource="media" layout={layout} />
+      <CategorySections subCategories={[]} items={items} itemSource="media" layout={layout} />
 
       {hasMore ? (
         <div ref={sentinelRef} className="flex justify-center py-10">

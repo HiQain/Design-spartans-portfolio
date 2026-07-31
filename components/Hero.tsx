@@ -20,7 +20,7 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
       <div className="pointer-events-none absolute -bottom-24 right-1/4 h-72 w-72 rounded-full bg-accent/30 blur-[100px]" />
 
       <div className="relative mx-auto max-w-3xl px-4 text-center">
-        <div className="mx-auto mb-8 h-64 w-64 sm:h-80 sm:w-80">
+        <div className="mx-auto mb-0 h-64 w-64 sm:h-80 sm:w-80">
           <img
             src="/logo.webp"
             alt="Design Spartans"
@@ -33,8 +33,6 @@ export default function Hero({ topContent }: { topContent: TopContent | null }) 
         <h1 className="font-display text-3xl uppercase tracking-wide text-white sm:text-4xl md:text-5xl">
           {title}
         </h1>
-
-        <div className="mx-auto mt-6 h-1 w-16 rounded-full bg-gradient-to-r from-brand to-accent" />
 
         <p className="mt-6 text-lg leading-relaxed text-white/70 font-condensed">{description}</p>
       </div>

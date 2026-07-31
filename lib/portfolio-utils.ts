@@ -32,9 +32,17 @@ export function getProjectDescription(project: Project): string {
   return candidates.find((value) => String(value || "").trim())?.trim() ?? "";
 }
 
-/** Sorts by `createdAt` (millis). */
-export function sortByCreatedAt<T extends { createdAt?: number }>(items: T[]): T[] {
-  return [...items].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+/**
+ * Sorts by `sortOrder` (admin drag-and-drop, ascending) first, falling back to
+ * `createdAt` descending - so items nobody has manually reordered yet naturally
+ * show newest-first, matching the server's own ordering.
+ */
+export function sortByCreatedAt<T extends { sortOrder?: number; createdAt?: number }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const sortOrderDifference = normalizeSortOrder(a.sortOrder) - normalizeSortOrder(b.sortOrder);
+    if (sortOrderDifference !== 0) return sortOrderDifference;
+    return (b.createdAt ?? 0) - (a.createdAt ?? 0);
+  });
 }
 
 function normalizeSortOrder(value: unknown): number {
@@ -101,21 +109,38 @@ export function isRealTitle(rawTitle?: string): boolean {
 
 export type CardAction =
   | { kind: "link"; href: string }
-  | { kind: "modal"; modalProject: { title: string; description: string; imageUrl: string; link: string } };
+  | {
+      kind: "modal";
+      modalProject: {
+        title: string;
+        description: string;
+        imageUrl: string;
+        link: string;
+        playStoreLink: string;
+        appStoreLink: string;
+        isFlipCard: boolean;
+        secondaryImageUrl: string;
+      };
+    };
+
+// Categories with a front/back image pair - shown as an auto-rotating 3D card in
+// the modal (only when both images are actually present; a single image just
+// shows statically like any other item).
+const FLIP_CARD_CATEGORIES = new Set(["merchandise & apparel", "branding materials"]);
 
 /**
- * "projects" items with a link navigate straight to the live site; everything else
- * (media/gallery items, or projects without a link) opens the preview modal instead.
+ * Every card opens the preview modal (image + description + Launch Website /
+ * Play Store / App Store buttons) instead of navigating away directly.
  */
 export function resolveCardAction(project: Project, itemSource: "projects" | "media"): CardAction {
   const rawTitle = String(project.title || project.name || "").trim();
   const title = isRealTitle(rawTitle) ? rawTitle : "";
   const link = String(project.link || "").trim();
   const hasLink = Boolean(link);
-
-  if (hasLink && itemSource === "projects") {
-    return { kind: "link", href: sanitizeUrl(link) };
-  }
+  const playStoreLink = String(project.playStoreLink || "").trim();
+  const appStoreLink = String(project.appStoreLink || "").trim();
+  const secondaryImageUrl = String(project.secondaryImageUrl || "").trim();
+  const isFlipCard = FLIP_CARD_CATEGORIES.has(normalizeValue(project.mainCategoryName)) && Boolean(secondaryImageUrl);
 
   return {
     kind: "modal",
@@ -124,40 +149,78 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
       description: getProjectDescription(project),
       imageUrl: sanitizeUrl(project.imageUrl),
       link: hasLink ? sanitizeUrl(link) : "",
+      playStoreLink: playStoreLink ? sanitizeUrl(playStoreLink) : "",
+      appStoreLink: appStoreLink ? sanitizeUrl(appStoreLink) : "",
+      isFlipCard,
+      secondaryImageUrl: secondaryImageUrl ? sanitizeUrl(secondaryImageUrl) : "",
     },
   };
 }
 
-export function buildCategoryPaneData({
+/**
+ * Shared by both the eager first-pane fetch (portfolio.ts) and the on-demand
+ * per-tab fetch (portfolio-client.ts) - both just hand in an `apiGet`-backed
+ * `fetchMedia`/`fetchProjects` pair, so the branching logic (media vs. projects,
+ * flat vs. per-subcategory) only has to live in one place.
+ *
+ * A cheap flat probe page decides itemSource (whether this category has any media
+ * rows at all, falling back to projects if not) exactly like before. When the
+ * category does have subCategories, that probe is then discarded in favor of one
+ * independent page per subcategory - see the `mediaPagesBySubCategory` doc comment
+ * in types.ts for why a single shared feed doesn't work once sortOrder is in play.
+ */
+export async function loadCategoryPaneData({
   category,
   allCategories,
-  mediaPage,
-  projects,
+  fetchMedia,
+  fetchProjects,
 }: {
   category: Category;
   allCategories: Category[];
-  mediaPage: MediaPage;
-  projects: Project[];
-}): CategoryPaneData {
+  fetchMedia: (subCategoryId: string | null) => Promise<MediaPage>;
+  fetchProjects: () => Promise<Project[]>;
+}): Promise<CategoryPaneData> {
   const subCategories = sortCategories(allCategories.filter((item) => item.parentId === category.id));
+  const probePage = await fetchMedia(null);
 
-  if (mediaPage.items.length) {
+  if (!probePage.items.length) {
+    const projects = await fetchProjects();
+    return {
+      subCategories,
+      itemSource: "projects",
+      layout: getCategoryLayout(category, "projects"),
+      items: projects,
+      mediaCursor: null,
+      mediaHasMore: false,
+      mediaPagesBySubCategory: null,
+    };
+  }
+
+  if (!subCategories.length) {
     return {
       subCategories,
       itemSource: "media",
       layout: getCategoryLayout(category, "media"),
-      items: mediaPage.items,
-      mediaCursor: mediaPage.cursor,
-      mediaHasMore: mediaPage.hasMore,
+      items: probePage.items,
+      mediaCursor: probePage.cursor,
+      mediaHasMore: probePage.hasMore,
+      mediaPagesBySubCategory: null,
     };
   }
 
+  const subCategoryPages = await Promise.all(subCategories.map((sub) => fetchMedia(sub.id)));
+  const mediaPagesBySubCategory: Record<string, MediaPage> = {};
+  subCategories.forEach((sub, index) => {
+    mediaPagesBySubCategory[sub.id] = subCategoryPages[index]!;
+  });
+
   return {
     subCategories,
-    itemSource: "projects",
-    layout: getCategoryLayout(category, "projects"),
-    items: projects,
+    itemSource: "media",
+    layout: getCategoryLayout(category, "media"),
+    items: [],
     mediaCursor: null,
     mediaHasMore: false,
+    mediaPagesBySubCategory,
   };
 }

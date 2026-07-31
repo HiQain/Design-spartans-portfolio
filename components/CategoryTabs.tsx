@@ -184,11 +184,11 @@ export default function CategoryTabs({
   const navThumbOffset = navScrollMetrics.progress * (NAV_INDICATOR_WIDTH - navThumbWidth);
 
   return (
-    <div className="pt-10 sm:pt-14">
+    <div className="pt-10 sm:pt-10">
       <div ref={navWrapperRef} className="relative mx-auto max-w-6xl px-4">
         <nav
           ref={navScrollRef}
-          className="no-scrollbar flex flex-nowrap justify-start gap-2 overflow-x-auto pb-1 sm:justify-center"
+          className="no-scrollbar flex flex-nowrap justify-start gap-2 overflow-x-auto pb-0 sm:justify-center"
         >
           {tabs.map((tab) => {
             const isActive = tab.id === activeId;
@@ -203,13 +203,11 @@ export default function CategoryTabs({
                     onMouseEnter={() => ensurePaneLoaded(tab.id)}
                     onFocus={() => ensurePaneLoaded(tab.id)}
                     onTouchStart={() => ensurePaneLoaded(tab.id)}
-                    className={`font-condensed h-10 whitespace-nowrap px-4 text-sm font-semibold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
-                      hasDropdown ? "rounded-l-full" : "rounded-full"
-                    } ${
-                      isActive
+                    className={`font-condensed h-10 whitespace-nowrap text-sm font-semibold tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${hasDropdown ? "rounded-l-full pl-4 pr-1.5" : "rounded-full px-4"
+                      } ${isActive
                         ? "bg-brand text-white shadow-lg shadow-brand/30"
                         : "border border-brand bg-white text-brand hover:bg-brand/5"
-                    } ${hasDropdown ? "border-r-0" : ""}`}
+                      } ${hasDropdown ? "border-r-0" : ""}`}
                   >
                     {tab.name}
                   </button>
@@ -222,11 +220,10 @@ export default function CategoryTabs({
                       onMouseEnter={() => ensurePaneLoaded(tab.id)}
                       onFocus={() => ensurePaneLoaded(tab.id)}
                       onTouchStart={() => ensurePaneLoaded(tab.id)}
-                      className={`flex h-10 w-8 items-center justify-center rounded-r-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
-                        isActive
-                          ? "bg-brand text-white"
-                          : "border border-l-0 border-brand text-brand hover:bg-brand/5"
-                      }`}
+                      className={`flex h-10 w-7 items-center justify-center rounded-r-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${isActive
+                        ? "bg-brand text-white"
+                        : "border border-l-0 border-brand text-brand hover:bg-brand/5"
+                        }`}
                     >
                       <ChevronDown className="h-4 w-4" />
                     </button>
@@ -288,6 +285,7 @@ export default function CategoryTabs({
                   initialItems={data.items}
                   initialCursor={data.mediaCursor}
                   initialHasMore={data.mediaHasMore}
+                  initialSubCategoryPages={data.mediaPagesBySubCategory}
                 />
               ) : (
                 <CategorySections

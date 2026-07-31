@@ -14,7 +14,7 @@ const GRID_BY_LAYOUT: Record<CategoryLayout, typeof WebCardGrid> = {
   gallery: MasonryGallery,
 };
 
-function LayoutGrid({
+export function LayoutGrid({
   layout,
   items,
   itemSource,
