@@ -25,8 +25,10 @@ export interface Project {
   imageUrl?: string;
   secondaryImageUrl?: string;
   link?: string;
-  /** Server-captured screenshot of `link`, used instead of a live iframe embed. */
+  /** Server-captured screenshot of `link`, used as a fallback when it isn't embeddable. */
   previewImageUrl?: string;
+  /** Whether `link` can be live-embedded in an iframe (its own headers allow it). */
+  isEmbeddable?: boolean | null;
   mainCategoryId?: string;
   mainCategoryName?: string;
   subCategoryId?: string;

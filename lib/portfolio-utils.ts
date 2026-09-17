@@ -117,6 +117,7 @@ export type CardAction =
         imageUrl: string;
         link: string;
         previewImageUrl: string;
+        isEmbeddable: boolean;
         playStoreLink: string;
         appStoreLink: string;
         figmaLink: string;
@@ -155,6 +156,7 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
       imageUrl: sanitizeUrl(project.imageUrl),
       link: hasLink ? sanitizeUrl(link) : "",
       previewImageUrl: sanitizeUrl(project.previewImageUrl),
+      isEmbeddable: project.isEmbeddable === true,
       playStoreLink: playStoreLink ? sanitizeUrl(playStoreLink) : "",
       appStoreLink: appStoreLink ? sanitizeUrl(appStoreLink) : "",
       figmaLink: figmaLink ? sanitizeUrl(figmaLink) : "",

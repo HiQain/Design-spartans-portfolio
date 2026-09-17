@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppleLogo, FigmaLogo, Globe, GooglePlay, X } from "./icons";
 
 export interface ModalProject {
@@ -9,9 +9,14 @@ export interface ModalProject {
   description: string;
   imageUrl: string;
   link: string;
-  // Server-captured screenshot of `link` - shown instead of a live iframe embed, since
-  // many sites refuse to be embedded at all (X-Frame-Options/CSP frame-ancestors).
+  // Server-captured screenshot of `link`, used as the fallback for sites that don't
+  // allow live embedding (see isEmbeddable).
   previewImageUrl?: string;
+  // Whether `link`'s own response headers allow it to be embedded live in an iframe -
+  // determined server-side alongside the screenshot capture (see api-server's
+  // lib/screenshot.ts). Sites that don't (X-Frame-Options/CSP frame-ancestors) fall
+  // back to the static screenshot instead, which always works.
+  isEmbeddable?: boolean;
   playStoreLink?: string;
   appStoreLink?: string;
   figmaLink?: string;
@@ -19,6 +24,18 @@ export interface ModalProject {
   isFlipCard?: boolean;
   secondaryImageUrl?: string;
 }
+
+// Rendered iframe size, in the site's own desktop-layout coordinate space - the iframe
+// is drawn at full desktop width, then visually scaled down to fit the preview box, so
+// an embedded site always renders its desktop breakpoint instead of a squished mobile one.
+const DESKTOP_WIDTH = 1440;
+const DESKTOP_HEIGHT = 2000;
+
+// If a site that's supposed to allow embedding still hasn't fired the iframe's load
+// event by this point (slow host, transient network hiccup, a frame-busting script the
+// header check didn't catch), fall back to the cached screenshot instead of leaving a
+// spinner running forever.
+const LOAD_TIMEOUT_MS = 12000;
 
 function getHostname(url: string): string {
   try {
@@ -28,21 +45,45 @@ function getHostname(url: string): string {
   }
 }
 
-// A static, server-captured screenshot of the site instead of a live iframe embed -
-// many sites refuse to be framed at all (X-Frame-Options/CSP frame-ancestors), which a
-// screenshot sidesteps entirely, and it's instant on every open (just an <img>, so the
-// browser's own image cache handles repeat views for free).
-function WebsiteScreenshot({
+// Live-embeds the site when its own headers allow it (isEmbeddable), falling back to
+// the cached screenshot - immediately if not embeddable, or if the live embed times
+// out/fails to load. The screenshot fallback means this never gets stuck blank.
+function WebsitePreview({
   link,
   previewImageUrl,
+  isEmbeddable,
   wide,
 }: {
   link: string;
   previewImageUrl?: string;
+  isEmbeddable?: boolean;
   wide: boolean;
 }) {
-  const [failed, setFailed] = useState(false);
-  const showImage = Boolean(previewImageUrl) && !failed;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeTimedOut, setIframeTimedOut] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const updateScale = () => setScale(el.clientWidth / DESKTOP_WIDTH);
+    updateScale();
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    setIframeTimedOut(false);
+    if (!isEmbeddable || iframeLoaded) return;
+    const timer = window.setTimeout(() => setIframeTimedOut(true), LOAD_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [link, isEmbeddable, iframeLoaded]);
+
+  const useIframe = Boolean(isEmbeddable) && !iframeTimedOut;
+  const showScreenshot = !useIframe && Boolean(previewImageUrl) && !imgFailed;
 
   return (
     <div
@@ -58,27 +99,54 @@ function WebsiteScreenshot({
         </div>
       </div>
       <div
+        ref={viewportRef}
         className={`relative w-full flex-1 overflow-hidden bg-neutral-100 ${wide
           ? "min-h-[160px] sm:min-h-[420px] md:min-h-[520px]"
           : "min-h-[240px] sm:min-h-[300px] md:min-h-[340px]"
           }`}
       >
-        {showImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={previewImageUrl}
-            alt={`${getHostname(link)} preview`}
-            onError={() => setFailed(true)}
-            className="website-autoscroll-frame absolute left-0 top-0 w-full"
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-brand" />
-            <p className="font-sans text-xs text-neutral-400">
-              Preview is being generated - use the button below to open the site directly.
-            </p>
+        {useIframe && scale > 0 ? (
+          <div
+            className="absolute left-0 top-0"
+            style={{ width: DESKTOP_WIDTH, height: DESKTOP_HEIGHT, transform: `scale(${scale})`, transformOrigin: "top left" }}
+          >
+            <iframe
+              key={link}
+              src={link}
+              title={getHostname(link)}
+              scrolling="no"
+              tabIndex={-1}
+              loading="eager"
+              onLoad={() => setIframeLoaded(true)}
+              style={{ width: DESKTOP_WIDTH, height: DESKTOP_HEIGHT }}
+              className={`pointer-events-none border-0 transition-opacity duration-300 ${iframeLoaded ? "website-autoscroll-frame opacity-100" : "opacity-0"
+                }`}
+            />
           </div>
-        )}
+        ) : null}
+        {useIframe && !iframeLoaded ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-brand" />
+          </div>
+        ) : null}
+        {!useIframe ? (
+          showScreenshot ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewImageUrl}
+              alt={`${getHostname(link)} preview`}
+              onError={() => setImgFailed(true)}
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-brand" />
+              <p className="font-sans text-xs text-neutral-400">
+                Preview is being generated - use the button below to open the site directly.
+              </p>
+            </div>
+          )
+        ) : null}
       </div>
     </div>
   );
@@ -330,7 +398,12 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
             ) : wide ? (
               <div className="flex min-h-0 flex-1 flex-col items-center gap-4 p-3 sm:p-4">
                 <div className="w-full sm:w-[64rem]">
-                  <WebsiteScreenshot link={activeProject!.link} previewImageUrl={activeProject!.previewImageUrl} wide />
+                  <WebsitePreview
+                    link={activeProject!.link}
+                    previewImageUrl={activeProject!.previewImageUrl}
+                    isEmbeddable={activeProject!.isEmbeddable}
+                    wide
+                  />
                 </div>
                 <div className="flex shrink-0 justify-center">
                   <a
@@ -347,7 +420,12 @@ export function ProjectModalProvider({ children }: { children: ReactNode }) {
               <div className="flex min-h-0 flex-1 flex-col gap-5 p-6 sm:p-8">
                 <div className="flex min-h-0 flex-1 flex-col gap-5 md:flex-row">
                   {activeProject?.link ? (
-                    <WebsiteScreenshot link={activeProject.link} previewImageUrl={activeProject.previewImageUrl} wide={wide} />
+                    <WebsitePreview
+                      link={activeProject.link}
+                      previewImageUrl={activeProject.previewImageUrl}
+                      isEmbeddable={activeProject.isEmbeddable}
+                      wide={wide}
+                    />
                   ) : activeProject?.imageUrl ? (
                     <div
                       className={`relative w-full shrink-0 overflow-hidden rounded-2xl bg-neutral-100 shadow-md md:min-h-0 ${wide ? "" : "md:w-[58%]"
