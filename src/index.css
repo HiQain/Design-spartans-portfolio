@@ -77,8 +77,10 @@ body {
   display: none;
 }
 
-/* Pans a tall iframe upward inside a fixed-height, overflow-hidden viewport to
-   simulate the embedded site auto-scrolling, then reverses - see ProjectModal. */
+/* Pans a tall website screenshot upward inside a fixed-height, overflow-hidden viewport
+   to simulate the site auto-scrolling, then reverses - see ProjectModal. Percentage-based
+   (relative to the image's own rendered height) so it scales with the image regardless of
+   how wide the preview box actually renders. */
 @keyframes website-autoscroll {
   0%,
   8% {
@@ -86,7 +88,7 @@ body {
   }
   46%,
   54% {
-    transform: translateY(-1600px);
+    transform: translateY(-45%);
   }
   92%,
   100% {
@@ -96,29 +98,6 @@ body {
 
 .website-autoscroll-frame {
   animation: website-autoscroll 22s ease-in-out infinite;
-}
-
-/* Mobile preview box is shorter, so pan a shorter distance too - otherwise the loop
-   scrolls past the real page's content into blank iframe padding below it. */
-@media (max-width: 639px) {
-  .website-autoscroll-frame {
-    animation-name: website-autoscroll-mobile;
-  }
-}
-
-@keyframes website-autoscroll-mobile {
-  0%,
-  8% {
-    transform: translateY(0);
-  }
-  46%,
-  54% {
-    transform: translateY(-700px);
-  }
-  92%,
-  100% {
-    transform: translateY(0);
-  }
 }
 
 /* Continuously spins the Merchandise/Branding preview card around its Y axis -

@@ -116,8 +116,11 @@ export type CardAction =
         description: string;
         imageUrl: string;
         link: string;
+        previewImageUrl: string;
         playStoreLink: string;
         appStoreLink: string;
+        figmaLink: string;
+        websiteLink: string;
         isFlipCard: boolean;
         secondaryImageUrl: string;
       };
@@ -139,6 +142,8 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
   const hasLink = Boolean(link);
   const playStoreLink = String(project.playStoreLink || "").trim();
   const appStoreLink = String(project.appStoreLink || "").trim();
+  const figmaLink = String(project.figmaLink || "").trim();
+  const websiteLink = String(project.websiteLink || "").trim();
   const secondaryImageUrl = String(project.secondaryImageUrl || "").trim();
   const isFlipCard = FLIP_CARD_CATEGORIES.has(normalizeValue(project.mainCategoryName)) && Boolean(secondaryImageUrl);
 
@@ -149,8 +154,11 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
       description: getProjectDescription(project),
       imageUrl: sanitizeUrl(project.imageUrl),
       link: hasLink ? sanitizeUrl(link) : "",
+      previewImageUrl: sanitizeUrl(project.previewImageUrl),
       playStoreLink: playStoreLink ? sanitizeUrl(playStoreLink) : "",
       appStoreLink: appStoreLink ? sanitizeUrl(appStoreLink) : "",
+      figmaLink: figmaLink ? sanitizeUrl(figmaLink) : "",
+      websiteLink: websiteLink ? sanitizeUrl(websiteLink) : "",
       isFlipCard,
       secondaryImageUrl: secondaryImageUrl ? sanitizeUrl(secondaryImageUrl) : "",
     },

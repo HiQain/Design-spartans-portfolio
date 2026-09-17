@@ -25,6 +25,8 @@ export interface Project {
   imageUrl?: string;
   secondaryImageUrl?: string;
   link?: string;
+  /** Server-captured screenshot of `link`, used instead of a live iframe embed. */
+  previewImageUrl?: string;
   mainCategoryId?: string;
   mainCategoryName?: string;
   subCategoryId?: string;
@@ -33,6 +35,8 @@ export interface Project {
   categoryName?: string;
   playStoreLink?: string;
   appStoreLink?: string;
+  figmaLink?: string;
+  websiteLink?: string;
   sortOrder?: number;
   /** Milliseconds since epoch. */
   createdAt?: number;

@@ -185,6 +185,7 @@ export default function CategoryTabs({
 
   return (
     <div className="pt-10 sm:pt-10">
+      <div className="sticky top-0 z-30 w-full bg-white py-3 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
       <div ref={navWrapperRef} className="relative mx-auto max-w-6xl px-4">
         <nav
           ref={navScrollRef}
@@ -259,6 +260,7 @@ export default function CategoryTabs({
             </div>
           </div>
         ) : null}
+      </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-10">
