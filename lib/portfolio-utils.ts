@@ -156,7 +156,9 @@ export function resolveCardAction(project: Project, itemSource: "projects" | "me
       imageUrl: sanitizeUrl(project.imageUrl),
       link: hasLink ? sanitizeUrl(link) : "",
       previewImageUrl: sanitizeUrl(project.previewImageUrl),
-      isEmbeddable: project.isEmbeddable === true,
+      // Unknown (null - not captured yet) is treated as embeddable so the live iframe is
+      // tried; only an explicit `false` from the server's header check skips it.
+      isEmbeddable: project.isEmbeddable !== false,
       playStoreLink: playStoreLink ? sanitizeUrl(playStoreLink) : "",
       appStoreLink: appStoreLink ? sanitizeUrl(appStoreLink) : "",
       figmaLink: figmaLink ? sanitizeUrl(figmaLink) : "",

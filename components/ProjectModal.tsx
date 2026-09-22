@@ -140,9 +140,8 @@ function WebsitePreview({
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-brand" />
-              <p className="font-sans text-xs text-neutral-400">
-                Preview is being generated - use the button below to open the site directly.
+              <p className="font-sans text-sm text-neutral-400">
+                Preview isn&apos;t available yet - use the button below to open the site directly.
               </p>
             </div>
           )
